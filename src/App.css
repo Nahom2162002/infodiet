@@ -1,0 +1,89 @@
+html, body, #root {
+    width: 380px;
+    min-height: 500px;
+    max-height: 600px;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: #0a0f0d;
+}
+
+* {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.splashBackground, .login-background, .create-background, .forgot-background, .menuBackground {
+    width: 380px;
+    min-height: 500px;
+    background: radial-gradient(circle at 50% 0%, #0a2e1a, #0a0f0d);
+    background-size: cover;
+    background-position: center;
+}
+
+.login, .create, .forgot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 32px 24px;
+    width: 100%;
+}
+
+input {
+    width: 220px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,200,150,0.3);
+    background: rgba(0,200,150,0.05);
+    color: white;
+    font-size: 14px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #00c896;
+    box-shadow: 0 0 8px rgba(0,200,150,0.2);
+}
+
+input::placeholder {
+    color: rgba(255,255,255,0.3);
+}
+
+.authbutton {
+    width: 220px;
+    padding: 11px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #00c896, #00a57a);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.authbutton:hover {
+    opacity: 0.9;
+}
+
+.authbutton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #ff6b6b;
+    font-size: 12px;
+    text-align: center;
+    margin: 0;
+}
+
+.success-message {
+    color: #00c896;
+    font-size: 12px;
+    text-align: center;
+    margin: 0;
+}

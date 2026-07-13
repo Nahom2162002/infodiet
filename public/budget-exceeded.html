@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Reached — InfoDiet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Inter, sans-serif;
+            background: radial-gradient(circle at 50% 0%, #0a2e1a, #0a0f0d);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px 24px;
+            max-width: 480px;
+        }
+        .emoji { font-size: 64px; margin-bottom: 24px; }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #00c896;
+        }
+        .category {
+            font-size: 18px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 8px;
+        }
+        .url {
+            font-size: 14px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 32px;
+            word-break: break-all;
+        }
+        .message {
+            font-size: 16px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.7;
+            margin-bottom: 40px;
+        }
+        .buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #00c896, #00a57a);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary {
+            padding: 12px 24px;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .budget-info {
+            background: rgba(0,200,150,0.1);
+            border: 1px solid rgba(0,200,150,0.2);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 32px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+        .budget-info strong { color: #00c896; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">🥗</div>
+        <h1>Budget Reached</h1>
+        <p class="category" id="categoryText">Loading...</p>
+        <p class="url" id="urlText"></p>
+        <div class="budget-info" id="budgetInfo"></div>
+        <p class="message">
+            Your information diet is looking out for you.<br>
+            You've reached your daily limit for this content category.
+        </p>
+        <div class="buttons">
+            <button class="btn-secondary" onclick="goBack()">← Go Back</button>
+            <button class="btn-primary" onclick="override()">Continue Anyway</button>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const url = params.get('url') || '';
+        const category = params.get('category') || 'other';
+        const limit = params.get('limit') || '0';
+        const spent = params.get('spent') || '0';
+
+        const categoryLabels = {
+            news: 'News & Politics 📰',
+            social: 'Social Media 📱',
+            entertainment: 'Entertainment 🎬',
+            educational: 'Educational 📚',
+            shopping: 'Shopping 🛍️',
+            forums: 'Forums & Communities 💬',
+            gaming: 'Gaming 🎮',
+            other: 'Other 🌐'
+        };
+
+        document.getElementById('categoryText').textContent = categoryLabels[category] || category;
+        document.getElementById('urlText').textContent = url;
+        document.getElementById('budgetInfo').innerHTML = 
+            `You've spent <strong>${Math.round(spent)} minutes</strong> on ${category} today. Your daily limit is <strong>${limit} minutes</strong>.`;
+
+        function goBack() {
+            history.back();
+        }
+
+        function override() {
+            // Allow access for 10 minutes before blocking again
+            chrome.storage.local.get('overrides', (result) => {
+                const overrides = result.overrides || {};
+                overrides[category] = Date.now() + (10 * 60 * 1000);
+                chrome.storage.local.set({ overrides });
+            });
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>
