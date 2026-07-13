@@ -18,6 +18,25 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'syncConsumption') {
         await syncToBackend();
+
+        // Also sync budgets
+        const result = await chrome.storage.local.get('token');
+        const token = result.token;
+        if (!token) return;
+
+        try {
+            const budgetRes = await fetch('https://your-vercel-url.vercel.app/api/budget', {
+                headers: { 'authorization': `Bearer ${token}` }
+            });
+            if (budgetRes.ok) {
+                const budgetData = await budgetRes.json();
+                if (budgetData.budgets) {
+                    await chrome.storage.local.set({ budgets: budgetData.budgets });
+                }
+            }
+        } catch (err) {
+            console.error('Budget sync failed:', err);
+        }
     }
 
     if (alarm.name === 'resetDaily') {
