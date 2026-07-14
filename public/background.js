@@ -170,7 +170,7 @@ async function syncActiveTabState() {
 }
 
 async function saveCurrentTime() {
-    const { activeTabUrl, startTime } = await chrome.storage.session.get(['activeTabUrl', 'startTime']);
+    const { activeTabId, activeTabUrl, startTime } = await chrome.storage.session.get(['activeTabId', 'activeTabUrl', 'startTime']);
     if (!activeTabUrl || !startTime) return;
 
     const elapsed = (Date.now() - startTime) / 1000 / 60;
@@ -193,8 +193,8 @@ async function saveCurrentTime() {
 
         await chrome.storage.local.set({ todayConsumption, pendingSync });
 
-        // Check budget after recording time
-        await checkBudget(category, todayConsumption[category]);
+        // Check budget after recording time — redirects this tab live if over
+        await checkBudget(category, todayConsumption[category], activeTabId, activeTabUrl);
 
     } catch (err) {
         console.error('Failed to save time:', err);
@@ -203,7 +203,7 @@ async function saveCurrentTime() {
     await chrome.storage.session.set({ startTime: Date.now() });
 }
 
-async function checkBudget(category, totalMinutes) {
+async function checkBudget(category, totalMinutes, tabId, currentUrl) {
     const result = await chrome.storage.local.get(['budgets', 'overrides']);
     const budgets = result.budgets || {};
     const overrides = result.overrides || {};
@@ -223,6 +223,20 @@ async function checkBudget(category, totalMinutes) {
             title: '🥗 InfoDiet — Budget Reached',
             message: `You've used your ${category} budget for today (${limit} minutes). New visits will be blocked.`
         });
+
+        // Redirect the tab immediately instead of waiting for the next
+        // navigation to hit onBeforeNavigate.
+        if (tabId !== undefined && currentUrl && !currentUrl.includes('budget-exceeded.html')) {
+            try {
+                await chrome.tabs.update(tabId, {
+                    url: chrome.runtime.getURL(
+                        `budget-exceeded.html?url=${encodeURIComponent(currentUrl)}&category=${category}&limit=${limit}&spent=${Math.round(totalMinutes)}`
+                    )
+                });
+            } catch (err) {
+                console.error('Failed to redirect over-budget tab:', err);
+            }
+        }
     }
 }
 
