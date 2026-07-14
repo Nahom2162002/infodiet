@@ -20,7 +20,9 @@
     "storage",
     "tabs",
     "alarms",
-    "webNavigation"
+    "webNavigation",
+    "notifications",
+    "windows"
   ],
   "background": {
     "service_worker": "background.js"

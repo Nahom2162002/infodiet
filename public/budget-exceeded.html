@@ -19,6 +19,7 @@
             text-align: center;
             padding: 40px 24px;
             max-width: 480px;
+            width: 100%;
         }
         .emoji { font-size: 64px; margin-bottom: 24px; }
         h1 {
@@ -33,16 +34,27 @@
             margin-bottom: 8px;
         }
         .url {
-            font-size: 14px;
+            font-size: 13px;
             color: rgba(255,255,255,0.3);
-            margin-bottom: 32px;
+            margin-bottom: 24px;
             word-break: break-all;
         }
+        .budget-info {
+            background: rgba(0,200,150,0.08);
+            border: 1px solid rgba(0,200,150,0.2);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
+        }
+        .budget-info strong { color: #00c896; }
         .message {
-            font-size: 16px;
-            color: rgba(255,255,255,0.7);
+            font-size: 15px;
+            color: rgba(255,255,255,0.6);
             line-height: 1.7;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
         }
         .buttons {
             display: flex;
@@ -52,35 +64,27 @@
         }
         .btn-primary {
             padding: 12px 24px;
-            background: linear-gradient(135deg, #00c896, #00a57a);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-secondary {
-            padding: 12px 24px;
-            background: transparent;
-            color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
             border: 1px solid rgba(255,255,255,0.15);
             border-radius: 10px;
             font-size: 14px;
             cursor: pointer;
         }
-        .budget-info {
-            background: rgba(0,200,150,0.1);
-            border: 1px solid rgba(0,200,150,0.2);
-            border-radius: 12px;
-            padding: 16px 24px;
-            margin-bottom: 32px;
+        .btn-override {
+            padding: 12px 24px;
+            background: rgba(255,107,107,0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(255,107,107,0.3);
+            border-radius: 10px;
             font-size: 14px;
-            color: rgba(255,255,255,0.6);
+            cursor: pointer;
         }
-        .budget-info strong { color: #00c896; }
+        .override-note {
+            color: rgba(255,255,255,0.2);
+            font-size: 11px;
+            margin-top: 16px;
+        }
     </style>
 </head>
 <body>
@@ -89,20 +93,24 @@
         <h1>Budget Reached</h1>
         <p class="category" id="categoryText">Loading...</p>
         <p class="url" id="urlText"></p>
+
         <div class="budget-info" id="budgetInfo"></div>
+
         <p class="message">
             Your information diet is looking out for you.<br>
             You've reached your daily limit for this content category.
         </p>
+
         <div class="buttons">
-            <button class="btn-secondary" onclick="goBack()">← Go Back</button>
-            <button class="btn-primary" onclick="override()">Continue Anyway</button>
+            <button class="btn-primary" onclick="goBack()">← Go Back</button>
+            <button class="btn-override" onclick="override()">Override for 10 min</button>
         </div>
+        <p class="override-note">Overriding will allow access for 10 minutes before blocking again</p>
     </div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const url = params.get('url') || '';
+        const url = decodeURIComponent(params.get('url') || '');
         const category = params.get('category') || 'other';
         const limit = params.get('limit') || '0';
         const spent = params.get('spent') || '0';
@@ -120,21 +128,22 @@
 
         document.getElementById('categoryText').textContent = categoryLabels[category] || category;
         document.getElementById('urlText').textContent = url;
-        document.getElementById('budgetInfo').innerHTML = 
-            `You've spent <strong>${Math.round(spent)} minutes</strong> on ${category} today. Your daily limit is <strong>${limit} minutes</strong>.`;
+        document.getElementById('budgetInfo').innerHTML =
+            `You've spent <strong>${Math.round(spent)} minutes</strong> on ${categoryLabels[category] || category} today.<br>Your daily limit is <strong>${limit} minutes</strong>.`;
 
         function goBack() {
             history.back();
         }
 
         function override() {
-            // Allow access for 10 minutes before blocking again
+            // Store override expiry — 10 minutes from now
             chrome.storage.local.get('overrides', (result) => {
                 const overrides = result.overrides || {};
                 overrides[category] = Date.now() + (10 * 60 * 1000);
-                chrome.storage.local.set({ overrides });
+                chrome.storage.local.set({ overrides }, () => {
+                    window.location.href = url;
+                });
             });
-            window.location.href = url;
         }
     </script>
 </body>

@@ -19,13 +19,13 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'syncConsumption') {
         await syncToBackend();
 
-        // Also sync budgets
+        // Sync budgets
         const result = await chrome.storage.local.get('token');
         const token = result.token;
-        if (!token) return;
+        if (!token || !navigator.onLine) return;
 
         try {
-            const budgetRes = await fetch('https://infodiet-web.vercel.app/api/budget', {
+            const budgetRes = await fetch('https://your-vercel-url.vercel.app/api/budget', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             if (budgetRes.ok) {
@@ -44,12 +44,62 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
 });
 
+// Intercept navigation to check budget
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+    if (details.frameId !== 0) return;
+    if (details.url.includes('budget-exceeded.html')) return;
+    if (!details.url.startsWith('http')) return;
+
+    try {
+        const url = new URL(details.url);
+        const domain = url.hostname.replace('www.', '');
+        const category = CATEGORY_MAP[domain];
+
+        if (!category) return; // unknown site — don't block
+
+        const result = await chrome.storage.local.get([
+            'todayConsumption', 'budgets', 'overrides', 'token'
+        ]);
+
+        if (!result.token) return; // not logged in
+
+        const todayConsumption = result.todayConsumption || {};
+        const budgets = result.budgets || {};
+        const overrides = result.overrides || {};
+
+        const spent = todayConsumption[category] || 0;
+        const limit = budgets[category];
+
+        // No limit set or unlimited
+        if (limit === undefined || limit === -1) return;
+
+        // Check if override is active
+        const overrideExpiry = overrides[category];
+        if (overrideExpiry && Date.now() < overrideExpiry) return;
+
+        // Check if over budget
+        if (spent >= limit) {
+            chrome.tabs.update(details.tabId, {
+                url: chrome.runtime.getURL(
+                    `budget-exceeded.html?url=${encodeURIComponent(details.url)}&category=${category}&limit=${limit}&spent=${Math.round(spent)}`
+                )
+            });
+        }
+    } catch (err) {
+        console.error('Navigation check failed:', err);
+    }
+});
+
 // Track active tab changes
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
     await saveCurrentTime();
-    const tab = await chrome.tabs.get(activeInfo.tabId);
-    activeTab = tab;
-    startTime = Date.now();
+    try {
+        const tab = await chrome.tabs.get(activeInfo.tabId);
+        activeTab = tab;
+        startTime = Date.now();
+    } catch (err) {
+        console.error('Tab get failed:', err);
+    }
 });
 
 // Track URL changes within the same tab
@@ -64,11 +114,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 // Track window focus changes
 chrome.windows.onFocusChanged.addListener(async (windowId) => {
     if (windowId === chrome.windows.WINDOW_ID_NONE) {
-        // Browser lost focus — save current time
         await saveCurrentTime();
         startTime = null;
     } else {
-        // Browser regained focus — start tracking
         startTime = Date.now();
     }
 });
@@ -76,8 +124,8 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
 async function saveCurrentTime() {
     if (!activeTab || !startTime) return;
 
-    const elapsed = (Date.now() - startTime) / 1000 / 60; // minutes
-    if (elapsed < 0.1) return; // ignore less than 6 seconds
+    const elapsed = (Date.now() - startTime) / 1000 / 60;
+    if (elapsed < 0.1) return;
 
     try {
         const url = activeTab.url || '';
@@ -86,20 +134,18 @@ async function saveCurrentTime() {
         const domain = new URL(url).hostname.replace('www.', '');
         const category = CATEGORY_MAP[domain] || 'other';
 
-        // Update local storage
         const result = await chrome.storage.local.get(['todayConsumption', 'pendingSync']);
         const todayConsumption = result.todayConsumption || {};
         const pendingSync = result.pendingSync || [];
 
         todayConsumption[category] = (todayConsumption[category] || 0) + elapsed;
 
-        // Add to pending sync queue
         const today = new Date().toISOString().split('T')[0];
         pendingSync.push({ domain, category, minutes: elapsed, date: today });
 
         await chrome.storage.local.set({ todayConsumption, pendingSync });
 
-        // Check budget
+        // Check budget after recording time
         await checkBudget(category, todayConsumption[category]);
 
     } catch (err) {
@@ -110,19 +156,24 @@ async function saveCurrentTime() {
 }
 
 async function checkBudget(category, totalMinutes) {
-    const result = await chrome.storage.local.get('budgets');
+    const result = await chrome.storage.local.get(['budgets', 'overrides']);
     const budgets = result.budgets || {};
+    const overrides = result.overrides || {};
     const limit = budgets[category];
 
     if (limit === undefined || limit === -1) return;
 
+    // Check if override is active
+    const overrideExpiry = overrides[category];
+    if (overrideExpiry && Date.now() < overrideExpiry) return;
+
     if (totalMinutes >= limit) {
-        // Show budget exceeded notification
-        chrome.notifications.create(`budget-${category}`, {
+        // Show notification
+        chrome.notifications.create(`budget-${category}-${Date.now()}`, {
             type: 'basic',
             iconUrl: 'icon-128x128.png',
-            title: 'InfoDiet — Budget Reached',
-            message: `You've reached your ${category} budget for today (${limit} minutes)`
+            title: '🥗 InfoDiet — Budget Reached',
+            message: `You've used your ${category} budget for today (${limit} minutes). New visits will be blocked.`
         });
     }
 }
@@ -135,9 +186,8 @@ async function syncToBackend() {
     if (!token || pendingSync.length === 0 || !navigator.onLine) return;
 
     try {
-        // Batch sync all pending entries
         for (const entry of pendingSync) {
-            await fetch('https://infodiet-web.vercel.app/api/consumption', {
+            await fetch('https://your-vercel-url.vercel.app/api/consumption', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -146,8 +196,6 @@ async function syncToBackend() {
                 body: JSON.stringify(entry)
             });
         }
-
-        // Clear pending sync queue
         await chrome.storage.local.set({ pendingSync: [] });
         console.log(`Synced ${pendingSync.length} entries`);
     } catch (err) {
@@ -160,9 +208,9 @@ async function checkDailyReset() {
     const today = new Date().toISOString().split('T')[0];
 
     if (result.lastResetDate !== today) {
-        // New day — reset today's consumption
         await chrome.storage.local.set({
             todayConsumption: {},
+            overrides: {},
             lastResetDate: today
         });
         console.log('Daily consumption reset');

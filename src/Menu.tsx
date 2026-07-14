@@ -240,13 +240,14 @@ function Menu() {
     };
 
     return (
-        <div className="menuBackground">
+        <div className="menuBackground" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ width: '100%', maxWidth: 640 }}>
             {/* Header */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '12px 16px',
+                padding: '20px 16px',
                 borderBottom: '1px solid rgba(0,200,150,0.1)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -470,6 +471,7 @@ function Menu() {
                         {formatMinutes(Object.values(todayConsumption).reduce((a, b) => a + b, 0))}
                     </span>
                 </div>
+            </div>
             </div>
 
             {/* Upgrade page modal */}

@@ -1,7 +1,6 @@
 html, body, #root {
-    width: 380px;
-    min-height: 500px;
-    max-height: 600px;
+    width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
@@ -9,17 +8,38 @@ html, body, #root {
     background: #0a0f0d;
 }
 
+/* The extension popup (Home/"/") can't exceed Chrome's hard popup cap of 800x600,
+   so we size it to that cap instead of the old cramped 380x500 box. */
+html.is-popup, html.is-popup body, html.is-popup #root {
+    width: 800px;
+    height: 600px;
+}
+
 * {
     box-sizing: border-box;
     max-width: 100%;
 }
 
-.splashBackground, .login-background, .create-background, .forgot-background, .menuBackground {
-    width: 380px;
-    min-height: 500px;
+.splashBackground {
+    width: 100%;
+    height: 100%;
     background: radial-gradient(circle at 50% 0%, #0a2e1a, #0a0f0d);
     background-size: cover;
     background-position: center;
+}
+
+.login-background, .create-background, .forgot-background, .menuBackground {
+    width: 100vw;
+    min-height: 100vh;
+    background: radial-gradient(circle at 50% 0%, #0a2e1a, #0a0f0d);
+    background-size: cover;
+    background-position: center;
+}
+
+.login-background, .create-background, .forgot-background {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .login, .create, .forgot {
@@ -28,8 +48,13 @@ html, body, #root {
     align-items: center;
     justify-content: center;
     gap: 16px;
-    padding: 32px 24px;
+    padding: 40px 36px;
     width: 100%;
+    max-width: 400px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(0,200,150,0.12);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
 }
 
 input {

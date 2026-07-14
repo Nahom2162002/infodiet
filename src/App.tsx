@@ -1,9 +1,22 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Login from './Login.tsx';
 import CreateAccount from './CreateAccount.tsx';
 import ForgotPassword from './ForgotPassword.tsx';
 import Menu from './Menu.tsx';
 import './App.css';
+
+// Only the "/" route is ever shown inside the extension's actual popup window;
+// every other route is opened in a full browser tab, so size the <html> element accordingly.
+function PopupSizeManager() {
+    const location = useLocation();
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('is-popup', location.pathname === '/');
+    }, [location.pathname]);
+
+    return null;
+}
 
 function Home() {
     return (
@@ -51,6 +64,7 @@ function Home() {
 function App() {
     return (
         <HashRouter>
+            <PopupSizeManager />
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
