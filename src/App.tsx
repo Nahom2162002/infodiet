@@ -1,9 +1,9 @@
-import './App.css';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import Login from './Login.tsx';
 import CreateAccount from './CreateAccount.tsx';
 import ForgotPassword from './ForgotPassword.tsx';
 import Menu from './Menu.tsx';
+import './App.css';
 
 function Home() {
     return (
@@ -31,7 +31,7 @@ function Home() {
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textAlign: 'center' }}>
                     Your brain deserves a healthy diet
                 </p>
-                
+                <a
                     href={chrome.runtime.getURL("index.html#/login")}
                     target="_blank"
                     rel="noreferrer"

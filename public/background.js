@@ -25,7 +25,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         if (!token) return;
 
         try {
-            const budgetRes = await fetch('https://your-vercel-url.vercel.app/api/budget', {
+            const budgetRes = await fetch('https://infodiet-web.vercel.app/api/budget', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             if (budgetRes.ok) {
@@ -137,7 +137,7 @@ async function syncToBackend() {
     try {
         // Batch sync all pending entries
         for (const entry of pendingSync) {
-            await fetch('https://your-vercel-url.vercel.app/api/consumption', {
+            await fetch('https://infodiet-web.vercel.app/api/consumption', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

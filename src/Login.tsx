@@ -12,14 +12,14 @@ function Login() {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch('https://your-vercel-url.vercel.app/api/auth/login', {
+            const response = await fetch('https://infodiet-web.vercel.app/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
             const data = await response.json();
             if (data.token) {
-                const planRes = await fetch('https://your-vercel-url.vercel.app/api/user/plan', {
+                const planRes = await fetch('https://infodiet-web.vercel.app/api/user/plan', {
                     headers: { 'authorization': `Bearer ${data.token}` }
                 });
                 const planData = await planRes.json();

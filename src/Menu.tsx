@@ -39,14 +39,14 @@ function Menu() {
             if (!token) return;
 
             // Fetch username
-            const userRes = await fetch('https://your-vercel-url.vercel.app/api/user/me', {
+            const userRes = await fetch('https://infodiet-web.vercel.app/api/user/me', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const userData = await userRes.json();
             if (userData.username) setUsername(userData.username);
 
             // Fetch plan status
-            const statusRes = await fetch('https://your-vercel-url.vercel.app/api/stripe/status', {
+            const statusRes = await fetch('https://infodiet-web.vercel.app/api/stripe/status', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const statusData = await statusRes.json();
@@ -58,7 +58,7 @@ function Menu() {
             setCancelAtPeriodEnd(statusData.cancelAtPeriodEnd ?? false);
 
             // Fetch budgets
-            const budgetRes = await fetch('https://your-vercel-url.vercel.app/api/budget', {
+            const budgetRes = await fetch('https://infodiet-web.vercel.app/api/budget', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const budgetData = await budgetRes.json();
@@ -105,7 +105,7 @@ function Menu() {
 
     const handleUpgrade = async () => {
         const { token } = await chrome.storage.local.get('token');
-        const response = await fetch('https://your-vercel-url.vercel.app/api/stripe/checkout', {
+        const response = await fetch('https://infodiet-web.vercel.app/api/stripe/checkout', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ function Menu() {
         if (data.url) {
             chrome.tabs.create({ url: data.url });
             const interval = setInterval(async () => {
-                const statusRes = await fetch('https://your-vercel-url.vercel.app/api/stripe/status', {
+                const statusRes = await fetch('https://infodiet-web.vercel.app/api/stripe/status', {
                     headers: { 'authorization': `Bearer ${token}` }
                 });
                 const statusData = await statusRes.json();
@@ -141,7 +141,7 @@ function Menu() {
 
     const handleManageSubscription = async () => {
         const { token } = await chrome.storage.local.get('token');
-        const response = await fetch('https://your-vercel-url.vercel.app/api/stripe/portal', {
+        const response = await fetch('https://infodiet-web.vercel.app/api/stripe/portal', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ function Menu() {
         if (data.url) {
             chrome.tabs.create({ url: data.url });
             const interval = setInterval(async () => {
-                const statusRes = await fetch('https://your-vercel-url.vercel.app/api/stripe/status', {
+                const statusRes = await fetch('https://infodiet-web.vercel.app/api/stripe/status', {
                     headers: { 'authorization': `Bearer ${token}` }
                 });
                 const statusData = await statusRes.json();
@@ -180,7 +180,7 @@ function Menu() {
         const result = await chrome.storage.local.get('token');
         const token = result.token as string;
         chrome.tabs.create({
-            url: `https://your-vercel-url.vercel.app/dashboard?token=${token}`
+            url: `https://infodiet-web.vercel.app/dashboard?token=${token}`
         });
     };
 
@@ -188,7 +188,7 @@ function Menu() {
         const result = await chrome.storage.local.get('token');
         const token = result.token as string;
         chrome.tabs.create({
-            url: `https://your-vercel-url.vercel.app/budget?token=${token}`
+            url: `https://infodiet-web.vercel.app/budget?token=${token}`
         });
     };
 

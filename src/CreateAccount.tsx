@@ -24,7 +24,7 @@ function CreateAccount() {
         setError('');
 
         try {
-            const response = await fetch('https://your-vercel-url.vercel.app/api/auth/register', {
+            const response = await fetch('https://infodiet-web.vercel.app/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
