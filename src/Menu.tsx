@@ -444,33 +444,35 @@ function UpgradePage({ onUpgrade, onClose }: { onUpgrade: () => void; onClose: (
                 background: 'linear-gradient(135deg, #0a2e1a, #0a0f0d)',
                 border: '1px solid rgba(0,200,150,0.3)',
                 borderRadius: 16,
-                padding: '24px 20px'
+                padding: '20px 18px',
+                maxWidth: 360,
+                margin: '0 auto'
             }}>
-                <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                    <p style={{ fontSize: 32, margin: 0 }}>🥗</p>
-                    <h2 style={{ color: 'white', fontSize: 18, fontWeight: 700, margin: '8px 0 4px' }}>
+                <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                    <p style={{ fontSize: 26, margin: 0 }}>🥗</p>
+                    <h2 style={{ color: 'white', fontSize: 16, fontWeight: 700, margin: '6px 0 4px' }}>
                         Upgrade to Pro
                     </h2>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>
-                        $5/month — 7-day free trial, no credit card required
+                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 0 }}>
+                        $9.99 — launch price, lifetime access (price goes up soon)
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                     {features.map((f, i) => (
-                        <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                             <div style={{
-                                width: 28, height: 28, flexShrink: 0,
+                                width: 24, height: 24, flexShrink: 0,
                                 display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', fontSize: 16
+                                justifyContent: 'center', fontSize: 14
                             }}>
                                 {f.emoji}
                             </div>
                             <div style={{ flex: 1 }}>
-                                <p style={{ color: 'white', fontSize: 13, fontWeight: 600, margin: '0 0 2px' }}>
+                                <p style={{ color: 'white', fontSize: 12, fontWeight: 600, margin: '0 0 2px' }}>
                                     {f.title}
                                 </p>
-                                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, margin: 0, lineHeight: 1.4 }}>
+                                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, margin: 0, lineHeight: 1.3 }}>
                                     {f.desc}
                                 </p>
                             </div>
@@ -482,37 +484,29 @@ function UpgradePage({ onUpgrade, onClose }: { onUpgrade: () => void; onClose: (
                     onClick={onUpgrade}
                     style={{
                         width: '100%',
-                        padding: 12,
+                        padding: 10,
                         borderRadius: 10,
                         border: 'none',
                         background: 'linear-gradient(135deg, #00c896, #00a57a)',
                         color: 'white',
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: 700,
                         cursor: 'pointer',
                         marginBottom: 8
                     }}
                 >
-                    Start 7-Day Free Trial
+                    Upgrade to Pro
                 </button>
-                <p style={{
-                    color: 'rgba(255,255,255,0.3)',
-                    fontSize: 10,
-                    textAlign: 'center',
-                    margin: '0 0 12px'
-                }}>
-                    No credit card required. Cancel anytime.
-                </p>
                 <button
                     onClick={onClose}
                     style={{
                         width: '100%',
-                        padding: 10,
+                        padding: 9,
                         borderRadius: 10,
                         border: '1px solid rgba(255,255,255,0.15)',
                         background: 'transparent',
                         color: 'rgba(255,255,255,0.5)',
-                        fontSize: 13,
+                        fontSize: 12,
                         cursor: 'pointer'
                     }}
                 >
