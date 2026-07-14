@@ -6,15 +6,15 @@
   "action": {
     "default_popup": "index.html",
     "default_icon": {
-      "16": "icon-16x16.png",
-      "32": "icon-32x32.png",
-      "128": "icon-128x128.png"
+      "16": "InfoDietIcon-16x16.png",
+      "32": "InfoDietIcon-32x32.png",
+      "128": "InfoDietIcon-128x128.png"
     }
   },
   "icons": {
-    "16": "icon-16x16.png",
-    "32": "icon-32x32.png",
-    "128": "icon-128x128.png"
+    "16": "InfoDietIcon-16x16.png",
+    "32": "InfoDietIcon-32x32.png",
+    "128": "InfoDietIcon-128x128.png"
   },
   "permissions": [
     "storage",
