@@ -17,8 +17,6 @@ function Menu() {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [todayConsumption, setTodayConsumption] = useState<ConsumptionData>({});
     const [budgets, setBudgets] = useState<BudgetData>({});
-    const [isTrialing, setIsTrialing] = useState(false);
-    const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
     const [lastSynced, setLastSynced] = useState<string | null>(null);
     const [showUpgradePage, setShowUpgradePage] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
@@ -54,8 +52,6 @@ function Menu() {
                 await chrome.storage.local.set({ plan: statusData.plan });
                 setPlan(statusData.plan);
             }
-            setIsTrialing(statusData.isTrialing ?? false);
-            setCancelAtPeriodEnd(statusData.cancelAtPeriodEnd ?? false);
 
             // Fetch budgets
             const budgetRes = await fetch('https://infodiet-web.vercel.app/api/budget', {
@@ -117,62 +113,12 @@ function Menu() {
         if (data.trial) {
             await chrome.storage.local.set({ plan: 'pro' });
             setPlan('pro');
-            setIsTrialing(true);
             setShowUpgradePage(false);
             return;
         }
 
         if (data.url) {
             chrome.tabs.create({ url: data.url });
-            const interval = setInterval(async () => {
-                const statusRes = await fetch('https://infodiet-web.vercel.app/api/stripe/status', {
-                    headers: { 'authorization': `Bearer ${token}` }
-                });
-                const statusData = await statusRes.json();
-                if (statusData.plan === 'pro') {
-                    await chrome.storage.local.set({ plan: 'pro' });
-                    setPlan('pro');
-                    clearInterval(interval);
-                }
-            }, 3000);
-            setTimeout(() => clearInterval(interval), 600000);
-        }
-    };
-
-    const handleManageSubscription = async () => {
-        const { token } = await chrome.storage.local.get('token');
-        const response = await fetch('https://infodiet-web.vercel.app/api/stripe/portal', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'authorization': `Bearer ${token}`
-            }
-        });
-        const data = await response.json();
-
-        if (data.cancelled) {
-            await chrome.storage.local.set({ plan: 'free' });
-            setPlan('free');
-            setIsTrialing(false);
-            setShowProfileMenu(false);
-            return;
-        }
-
-        if (data.url) {
-            chrome.tabs.create({ url: data.url });
-            const interval = setInterval(async () => {
-                const statusRes = await fetch('https://infodiet-web.vercel.app/api/stripe/status', {
-                    headers: { 'authorization': `Bearer ${token}` }
-                });
-                const statusData = await statusRes.json();
-                setCancelAtPeriodEnd(statusData.cancelAtPeriodEnd ?? false);
-                if (statusData.plan !== plan) {
-                    await chrome.storage.local.set({ plan: statusData.plan });
-                    setPlan(statusData.plan);
-                }
-                if (statusData.cancelAtPeriodEnd) clearInterval(interval);
-            }, 3000);
-            setTimeout(() => clearInterval(interval), 600000);
         }
     };
 
@@ -316,11 +262,7 @@ function Menu() {
                                     display: 'inline-block'
                                 }}>
                                     {plan === 'pro'
-                                        ? isTrialing
-                                            ? '🥗 PRO TRIAL'
-                                            : cancelAtPeriodEnd
-                                                ? '🥗 PRO — Cancels at period end'
-                                                : '🥗 PRO'
+                                        ? '🥗 PRO'
                                         : 'FREE'}
                                 </span>
                             </div>
@@ -341,16 +283,6 @@ function Menu() {
                                     style={{ ...menuItemStyle, color: '#00c896' }}
                                 >
                                     ⭐ Upgrade to Pro
-                                </button>
-                            )}
-
-                            {/* Pro tier */}
-                            {plan === 'pro' && (
-                                <button
-                                    onClick={() => { handleManageSubscription(); setShowProfileMenu(false); }}
-                                    style={menuItemStyle}
-                                >
-                                    {isTrialing ? '❌ Cancel Trial' : '💳 Manage Subscription'}
                                 </button>
                             )}
 
