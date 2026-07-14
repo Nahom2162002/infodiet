@@ -1,17 +1,22 @@
 importScripts('categoryMap.js');
 
-let activeTab = null;
-let startTime = null;
+// NOTE: MV3 service workers are killed after ~30s of inactivity, which wipes
+// plain module-level variables. Active-tab tracking state is persisted in
+// chrome.storage.session (in-memory, survives worker restarts, cleared on
+// browser close) instead, so a periodic alarm can keep tracking accurate
+// even when the user never triggers a tab/window event.
 
 // Initialize alarms
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create('syncConsumption', { periodInMinutes: 5 });
     chrome.alarms.create('resetDaily', { periodInMinutes: 1 });
+    chrome.alarms.create('trackTime', { periodInMinutes: 1 });
 });
 
 chrome.runtime.onStartup.addListener(() => {
     chrome.alarms.create('syncConsumption', { periodInMinutes: 5 });
     chrome.alarms.create('resetDaily', { periodInMinutes: 1 });
+    chrome.alarms.create('trackTime', { periodInMinutes: 1 });
 });
 
 // Handle alarms
@@ -41,6 +46,13 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
     if (alarm.name === 'resetDaily') {
         await checkDailyReset();
+    }
+
+    if (alarm.name === 'trackTime') {
+        // Service worker may have just woken up with no in-memory state;
+        // resync against whatever tab is actually active before saving.
+        await syncActiveTabState();
+        await saveCurrentTime();
     }
 });
 
@@ -95,8 +107,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     await saveCurrentTime();
     try {
         const tab = await chrome.tabs.get(activeInfo.tabId);
-        activeTab = tab;
-        startTime = Date.now();
+        await setActiveTabState(tab);
     } catch (err) {
         console.error('Tab get failed:', err);
     }
@@ -106,8 +117,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.active) {
         await saveCurrentTime();
-        activeTab = tab;
-        startTime = Date.now();
+        await setActiveTabState(tab);
     }
 });
 
@@ -115,23 +125,61 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 chrome.windows.onFocusChanged.addListener(async (windowId) => {
     if (windowId === chrome.windows.WINDOW_ID_NONE) {
         await saveCurrentTime();
-        startTime = null;
+        await chrome.storage.session.set({ startTime: null });
     } else {
-        startTime = Date.now();
+        await syncActiveTabState();
     }
 });
 
+// Persist which tab is active and when tracking of it started.
+async function setActiveTabState(tab) {
+    await chrome.storage.session.set({
+        activeTabId: tab.id,
+        activeTabUrl: tab.url || '',
+        startTime: Date.now()
+    });
+}
+
+// Re-derive active-tab state from the browser when it's missing (e.g. the
+// service worker just woke up) or a window regained focus.
+async function syncActiveTabState() {
+    const { activeTabId } = await chrome.storage.session.get('activeTabId');
+    try {
+        const focusedWindow = await chrome.windows.getLastFocused();
+        if (!focusedWindow || !focusedWindow.focused) return; // Chrome isn't the foreground app — stay paused
+
+        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (!tab) return;
+
+        if (tab.id !== activeTabId) {
+            // Active tab changed while the worker was asleep — start fresh.
+            await setActiveTabState(tab);
+            return;
+        }
+
+        const { startTime } = await chrome.storage.session.get('startTime');
+        if (!startTime) {
+            await setActiveTabState(tab);
+        } else {
+            // Keep the original startTime but refresh the URL in case it navigated.
+            await chrome.storage.session.set({ activeTabUrl: tab.url || '' });
+        }
+    } catch (err) {
+        console.error('Failed to sync active tab state:', err);
+    }
+}
+
 async function saveCurrentTime() {
-    if (!activeTab || !startTime) return;
+    const { activeTabUrl, startTime } = await chrome.storage.session.get(['activeTabUrl', 'startTime']);
+    if (!activeTabUrl || !startTime) return;
 
     const elapsed = (Date.now() - startTime) / 1000 / 60;
     if (elapsed < 0.1) return;
 
     try {
-        const url = activeTab.url || '';
-        if (!url.startsWith('http')) return;
+        if (!activeTabUrl.startsWith('http')) return;
 
-        const domain = new URL(url).hostname.replace('www.', '');
+        const domain = new URL(activeTabUrl).hostname.replace('www.', '');
         const category = CATEGORY_MAP[domain] || 'other';
 
         const result = await chrome.storage.local.get(['todayConsumption', 'pendingSync']);
@@ -152,7 +200,7 @@ async function saveCurrentTime() {
         console.error('Failed to save time:', err);
     }
 
-    startTime = Date.now();
+    await chrome.storage.session.set({ startTime: Date.now() });
 }
 
 async function checkBudget(category, totalMinutes) {
@@ -187,7 +235,7 @@ async function syncToBackend() {
 
     try {
         for (const entry of pendingSync) {
-            await fetch('https://your-vercel-url.vercel.app/api/consumption', {
+            await fetch('https://infodiet-web.vercel.app/api/consumption', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
