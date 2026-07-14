@@ -25,7 +25,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         if (!token || !navigator.onLine) return;
 
         try {
-            const budgetRes = await fetch('https://your-vercel-url.vercel.app/api/budget', {
+            const budgetRes = await fetch('https://infodiet-web.vercel.app/api/budget', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             if (budgetRes.ok) {
