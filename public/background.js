@@ -6,18 +6,116 @@ importScripts('categoryMap.js');
 // browser close) instead, so a periodic alarm can keep tracking accurate
 // even when the user never triggers a tab/window event.
 
+// Stable rule IDs for declarativeNetRequest, one per known domain. Blocking
+// is enforced at the network layer via these rules (rather than reacting to
+// webNavigation events) so an over-budget site can never win the race and
+// finish loading before the extension notices.
+const DOMAIN_RULE_IDS = {};
+Object.keys(CATEGORY_MAP).forEach((domain, i) => {
+    DOMAIN_RULE_IDS[domain] = i + 1;
+});
+
 // Initialize alarms
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create('syncConsumption', { periodInMinutes: 5 });
     chrome.alarms.create('resetDaily', { periodInMinutes: 1 });
     chrome.alarms.create('trackTime', { periodInMinutes: 1 });
+    syncBlockingRules();
 });
 
 chrome.runtime.onStartup.addListener(() => {
     chrome.alarms.create('syncConsumption', { periodInMinutes: 5 });
     chrome.alarms.create('resetDaily', { periodInMinutes: 1 });
     chrome.alarms.create('trackTime', { periodInMinutes: 1 });
+    syncBlockingRules();
 });
+
+// Keep blocking rules in lockstep with anything that affects budget status.
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if (changes.todayConsumption || changes.budgets || changes.overrides || changes.token) {
+        syncBlockingRules();
+    }
+});
+
+// Messages from budget-exceeded.js — handled here (rather than writing to
+// storage directly from the page) so the override is guaranteed to be
+// reflected in the declarativeNetRequest rules before the page navigates
+// away, avoiding a redirect loop.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.type === 'setOverride' && message.category) {
+        (async () => {
+            const result = await chrome.storage.local.get('overrides');
+            const overrides = result.overrides || {};
+            overrides[message.category] = Date.now() + 10 * 60 * 1000;
+            await chrome.storage.local.set({ overrides });
+            await syncBlockingRules();
+            sendResponse({ ok: true });
+        })();
+        return true; // keep the message channel open for the async response
+    }
+});
+
+function buildDomainRule(domain, category) {
+    return {
+        id: DOMAIN_RULE_IDS[domain],
+        priority: 1,
+        action: {
+            type: 'redirect',
+            redirect: {
+                url: chrome.runtime.getURL(
+                    `budget-exceeded.html?category=${encodeURIComponent(category)}&domain=${encodeURIComponent(domain)}`
+                )
+            }
+        },
+        condition: {
+            urlFilter: `||${domain}^`,
+            resourceTypes: ['main_frame']
+        }
+    };
+}
+
+async function getBlockedCategories() {
+    const result = await chrome.storage.local.get(['token', 'todayConsumption', 'budgets', 'overrides']);
+    if (!result.token) return new Set(); // not logged in — don't block
+
+    const todayConsumption = result.todayConsumption || {};
+    const budgets = result.budgets || {};
+    const overrides = result.overrides || {};
+    const blocked = new Set();
+
+    for (const category of Object.keys(budgets)) {
+        const limit = budgets[category];
+        if (limit === undefined || limit === -1) continue;
+
+        const overrideExpiry = overrides[category];
+        if (overrideExpiry && Date.now() < overrideExpiry) continue;
+
+        const spent = todayConsumption[category] || 0;
+        if (spent >= limit) blocked.add(category);
+    }
+    return blocked;
+}
+
+async function syncBlockingRules() {
+    try {
+        const blockedCategories = await getBlockedCategories();
+
+        const addRules = Object.keys(CATEGORY_MAP)
+            .filter((domain) => blockedCategories.has(CATEGORY_MAP[domain]))
+            .map((domain) => buildDomainRule(domain, CATEGORY_MAP[domain]));
+
+        const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+        const managedIds = new Set(Object.values(DOMAIN_RULE_IDS));
+        const removeRuleIds = existingRules
+            .map((rule) => rule.id)
+            .filter((id) => managedIds.has(id));
+
+        await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds, addRules });
+    } catch (err) {
+        console.error('Failed to sync blocking rules:', err);
+    }
+}
 
 // Handle alarms
 chrome.alarms.onAlarm.addListener(async (alarm) => {
