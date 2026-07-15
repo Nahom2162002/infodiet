@@ -282,10 +282,11 @@ function Menu() {
                                 </span>
                             </div>
 
-                            {/* Dashboard */}
-                            <button onClick={() => { handleDashboard(); setShowProfileMenu(false); }} style={menuItemStyle}>
-                                📊 Full Dashboard
-                            </button>
+                            {plan === 'pro' && (
+                                <button onClick={() => { handleDashboard(); setShowProfileMenu(false); }} style={menuItemStyle}>
+                                    📊 Full Dashboard
+                                </button>
+                            )}
 
                             {plan === 'pro' && (
                                 <button onClick={() => { handleBudgetSettings(); setShowProfileMenu(false); }} style={menuItemStyle}>
