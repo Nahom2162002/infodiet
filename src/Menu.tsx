@@ -10,6 +10,21 @@ interface BudgetData {
     [category: string]: number;
 }
 
+const FREE_FEATURES = [
+    'Automatic content tracking',
+    'All 8 content categories',
+    "Today's consumption view",
+];
+const PRO_FEATURES = [
+    'Everything in Free',
+    'Daily budgets per category',
+    'Budget blocking',
+    'Information quality score',
+    'Weekly trend dashboard',
+    'Budget alerts',
+    'Cross-device sync',
+];
+
 function Menu() {
     const navigate = useNavigate();
     const [plan, setPlan] = useState<string>('free');
@@ -44,7 +59,7 @@ function Menu() {
             if (userData.username) setUsername(userData.username);
 
             // Fetch plan status
-            const statusRes = await fetch('https://infodiet-web.vercel.app/api/stripe/status', {
+            const statusRes = await fetch('https://infodiet-web.vercel.app/api/user/plan', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const statusData = await statusRes.json();
@@ -272,9 +287,11 @@ function Menu() {
                                 📊 Full Dashboard
                             </button>
 
-                            <button onClick={() => { handleBudgetSettings(); setShowProfileMenu(false); }} style={menuItemStyle}>
-                                ⚙️ Manage Budgets
-                            </button>
+                            {plan === 'pro' && (
+                                <button onClick={() => { handleBudgetSettings(); setShowProfileMenu(false); }} style={menuItemStyle}>
+                                    ⚙️ Manage Budgets
+                                </button>
+                            )}
 
                             {/* Free tier */}
                             {plan === 'free' && (
@@ -422,14 +439,6 @@ function Menu() {
 
 // Inline upgrade page
 function UpgradePage({ onUpgrade, onClose }: { onUpgrade: () => void; onClose: () => void }) {
-    const features = [
-        { emoji: '📊', title: 'Full Dashboard', desc: 'Weekly charts, trends, and your information quality score' },
-        { emoji: '⏱', title: 'Custom Budgets', desc: 'Set daily time limits per category that actually work' },
-        { emoji: '🚨', title: 'Budget Alerts', desc: 'Get notified when you approach or exceed your limits' },
-        { emoji: '🔄', title: 'Cross-Device Sync', desc: 'Your consumption data syncs across all your browsers' },
-        { emoji: '📈', title: 'Weekly Reports', desc: 'Email digest of your information diet every week' },
-        { emoji: '🎯', title: 'Quality Score', desc: 'See your educational vs entertainment ratio over time' },
-    ];
 
     return (
         <div style={{
@@ -458,26 +467,60 @@ function UpgradePage({ onUpgrade, onClose }: { onUpgrade: () => void; onClose: (
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-                    {features.map((f, i) => (
-                        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                            <div style={{
-                                width: 24, height: 24, flexShrink: 0,
-                                display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', fontSize: 14
+                <div style={{ marginBottom: 14 }}>
+                    <span style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 20,
+                        background: 'rgba(255,255,255,0.1)',
+                        color: 'rgba(255,255,255,0.5)',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                        FREE
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                        {FREE_FEATURES.map((f, i) => (
+                            <p key={i} style={{
+                                color: 'rgba(255,255,255,0.7)',
+                                fontSize: 12,
+                                margin: 0,
+                                display: 'flex',
+                                gap: 8,
+                                alignItems: 'center'
                             }}>
-                                {f.emoji}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                                <p style={{ color: 'white', fontSize: 12, fontWeight: 600, margin: '0 0 2px' }}>
-                                    {f.title}
-                                </p>
-                                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, margin: 0, lineHeight: 1.3 }}>
-                                    {f.desc}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
+                                <span style={{ color: '#00c896' }}>✓</span> {f}
+                            </p>
+                        ))}
+                    </div>
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                    <span style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 20,
+                        background: 'rgba(0,200,150,0.15)',
+                        color: '#00c896',
+                        border: '1px solid rgba(0,200,150,0.3)'
+                    }}>
+                        PRO
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                        {PRO_FEATURES.map((f, i) => (
+                            <p key={i} style={{
+                                color: 'rgba(255,255,255,0.7)',
+                                fontSize: 12,
+                                margin: 0,
+                                display: 'flex',
+                                gap: 8,
+                                alignItems: 'center'
+                            }}>
+                                <span style={{ color: '#00c896' }}>✓</span> {f}
+                            </p>
+                        ))}
+                    </div>
                 </div>
 
                 <button
