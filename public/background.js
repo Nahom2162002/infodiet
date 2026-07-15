@@ -302,9 +302,10 @@ async function saveCurrentTime() {
 }
 
 async function checkBudget(category, totalMinutes, tabId, currentUrl) {
-    const result = await chrome.storage.local.get(['budgets', 'overrides']);
+    const result = await chrome.storage.local.get(['budgets', 'overrides', 'budgetAlerts']);
     const budgets = result.budgets || {};
     const overrides = result.overrides || {};
+    const budgetAlerts = result.budgetAlerts || {};
     const limit = budgets[category];
 
     if (limit === undefined || limit === -1) return;
@@ -312,6 +313,17 @@ async function checkBudget(category, totalMinutes, tabId, currentUrl) {
     // Check if override is active
     const overrideExpiry = overrides[category];
     if (overrideExpiry && Date.now() < overrideExpiry) return;
+
+    // Approaching budget — fire once per category per day at the 80% mark.
+    if (totalMinutes >= limit * 0.8 && totalMinutes < limit && !budgetAlerts[category]) {
+        chrome.notifications.create(`budget-approaching-${category}-${Date.now()}`, {
+            type: 'basic',
+            iconUrl: 'icon-128x128.png',
+            title: '🥗 InfoDiet — Approaching Budget',
+            message: `You're at ${Math.round((totalMinutes / limit) * 100)}% of your ${category} budget for today (${Math.round(totalMinutes)}/${limit} minutes).`
+        });
+        await chrome.storage.local.set({ budgetAlerts: { ...budgetAlerts, [category]: true } });
+    }
 
     if (totalMinutes >= limit) {
         // Show notification
@@ -371,6 +383,7 @@ async function checkDailyReset() {
         await chrome.storage.local.set({
             todayConsumption: {},
             overrides: {},
+            budgetAlerts: {},
             lastResetDate: today
         });
         console.log('Daily consumption reset');
