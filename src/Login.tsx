@@ -48,15 +48,9 @@ function Login() {
     return (
         <div className="login-background">
             <div className="login">
-                <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                    <p style={{ fontSize: 48, margin: 0 }}>🥗</p>
-                    <h1 style={{ color: 'white', fontSize: 22, fontWeight: 700, margin: '8px 0 4px' }}>
-                        InfoDiet
-                    </h1>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, margin: 0 }}>
-                        Your brain deserves a healthy diet
-                    </p>
-                </div>
+                <div className="authLogo"><div className="authLogo-dot" /></div>
+                <h1 className="authTitle">InfoDiet</h1>
+                <p className="authSubtitle">Your brain deserves a healthy diet</p>
 
                 <input
                     type="text"
@@ -71,13 +65,14 @@ function Login() {
                     onKeyDown={(e) => handleKeyDown(e, handleLogin)}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
+                    style={{ marginBottom: 10 }}
                 />
 
                 <a
                     href={chrome.runtime.getURL("index.html#/forgot")}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: '#00c896', fontSize: 12 }}
+                    className="authLink"
                 >
                     Forgot password?
                 </a>
@@ -88,9 +83,8 @@ function Login() {
                     {loading ? 'Logging in...' : 'Log in'}
                 </button>
                 <button
-                    className="authbutton"
+                    className="authbutton authbutton-secondary"
                     onClick={() => navigate('/create')}
-                    style={{ background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)' }}
                 >
                     Create Account
                 </button>

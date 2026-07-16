@@ -197,14 +197,14 @@ function Menu() {
 
     const getInitials = (name: string) => name ? name.slice(0, 2).toUpperCase() : '?';
 
-    const menuItemStyle: React.CSSProperties = {
-        display: 'block',
+    const dropdownRowStyle: React.CSSProperties = {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
         width: '100%',
-        padding: '10px 16px',
+        padding: '14px 20px',
         background: 'transparent',
         border: 'none',
-        color: 'oklch(0.8 0.01 160)',
-        fontSize: 13,
         textAlign: 'left',
         cursor: 'pointer'
     };
@@ -296,80 +296,100 @@ function Menu() {
                                 position: 'absolute',
                                 top: 44,
                                 right: 0,
+                                width: 340,
+                                maxWidth: 'none',
                                 background: 'oklch(0.2 0.02 160)',
                                 border: '1px solid oklch(1 0 0 / 0.08)',
-                                borderRadius: 12,
-                                padding: '8px 0',
-                                minWidth: 220,
+                                borderRadius: 18,
+                                overflow: 'hidden',
                                 zIndex: 100,
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+                                boxShadow: '0 12px 40px oklch(0 0 0 / 0.35)'
                             }}>
                                 {/* User info */}
                                 <div style={{
-                                    padding: '10px 16px 12px',
-                                    borderBottom: '1px solid oklch(1 0 0 / 0.08)'
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: 12,
+                                    padding: '24px 20px 20px'
                                 }}>
-                                    <p style={{ color: 'oklch(0.95 0.01 160)', fontWeight: 600, fontSize: 14, margin: '0 0 4px' }}>
-                                        {username}
-                                    </p>
-                                    <span style={{
-                                        padding: '2px 8px',
-                                        borderRadius: 20,
-                                        fontSize: 10,
-                                        fontWeight: 700,
+                                    <div style={{
+                                        width: 48,
+                                        height: 48,
+                                        borderRadius: '50%',
                                         background: plan === 'pro' ? GREEN : 'oklch(1 0 0 / 0.08)',
-                                        color: plan === 'pro' ? 'oklch(0.14 0.02 160)' : 'oklch(0.7 0.01 160)',
-                                        whiteSpace: 'nowrap',
-                                        display: 'inline-block'
+                                        color: plan === 'pro' ? 'oklch(0.14 0.02 160)' : 'oklch(0.9 0.01 160)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: 16,
+                                        fontWeight: 700
                                     }}>
-                                        {plan === 'pro' ? '🥗 PRO' : 'FREE'}
-                                    </span>
+                                        {getInitials(username)}
+                                    </div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: 'oklch(0.95 0.01 160)' }}>{username}</div>
+                                    {plan === 'pro' ? (
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 999, background: GREEN }}>
+                                            <div style={{ width: 8, height: 8, background: 'oklch(0.14 0.02 160)', transform: 'rotate(45deg)' }} />
+                                            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', color: 'oklch(0.14 0.02 160)' }}>PRO</div>
+                                        </div>
+                                    ) : (
+                                        <div style={{ padding: '6px 16px', borderRadius: 999, background: 'oklch(1 0 0 / 0.08)', fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', color: 'oklch(0.7 0.01 160)' }}>
+                                            FREE
+                                        </div>
+                                    )}
                                 </div>
 
-                                {plan === 'pro' && (
-                                    <button onClick={() => { handleDashboard(); setShowProfileMenu(false); }} style={menuItemStyle}>
-                                        📊 Full Dashboard
+                                <div style={{ height: 1, background: 'oklch(1 0 0 / 0.07)' }} />
+
+                                {plan === 'pro' ? (
+                                    <>
+                                        <button onClick={() => { handleDashboard(); setShowProfileMenu(false); }} style={dropdownRowStyle}>
+                                            <div style={{ width: 30, height: 30, borderRadius: 9, background: 'oklch(0.32 0.06 250)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 14 }}>
+                                                    <div style={{ width: 4, height: 7, borderRadius: 2, background: 'oklch(0.8 0.1 250)' }} />
+                                                    <div style={{ width: 4, height: 14, borderRadius: 2, background: 'oklch(0.8 0.1 250)' }} />
+                                                    <div style={{ width: 4, height: 10, borderRadius: 2, background: 'oklch(0.8 0.1 250)' }} />
+                                                </div>
+                                            </div>
+                                            <span style={{ fontSize: 14, fontWeight: 600, color: 'oklch(0.9 0.01 160)' }}>Full Dashboard</span>
+                                        </button>
+
+                                        <button onClick={() => { handleBudgetSettings(); setShowProfileMenu(false); }} style={dropdownRowStyle}>
+                                            <div style={{ width: 30, height: 30, borderRadius: 9, background: 'oklch(0.32 0.06 85)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid oklch(0.8 0.08 85)' }} />
+                                            </div>
+                                            <span style={{ fontSize: 14, fontWeight: 600, color: 'oklch(0.9 0.01 160)' }}>Manage Budgets</span>
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button onClick={() => { setShowUpgradePage(true); setShowProfileMenu(false); }} style={dropdownRowStyle}>
+                                        <div style={{ width: 30, height: 30, borderRadius: 9, background: 'oklch(0.32 0.08 155)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            <div style={{ width: 10, height: 10, borderRadius: 2, background: GREEN, transform: 'rotate(45deg)' }} />
+                                        </div>
+                                        <span style={{ fontSize: 14, fontWeight: 600, color: GREEN }}>Upgrade to Pro</span>
                                     </button>
                                 )}
 
-                                {plan === 'pro' && (
-                                    <button onClick={() => { handleBudgetSettings(); setShowProfileMenu(false); }} style={menuItemStyle}>
-                                        ⚙️ Manage Budgets
-                                    </button>
-                                )}
-
-                                {/* Free tier */}
-                                {plan === 'free' && (
-                                    <button
-                                        onClick={() => { setShowUpgradePage(true); setShowProfileMenu(false); }}
-                                        style={{ ...menuItemStyle, color: GREEN }}
-                                    >
-                                        ⭐ Upgrade to Pro
-                                    </button>
-                                )}
+                                <div style={{ height: 1, background: 'oklch(1 0 0 / 0.07)' }} />
 
                                 {/* Sync */}
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '10px 16px',
-                                    borderTop: '1px solid oklch(1 0 0 / 0.08)'
-                                }}>
-                                    <span style={{ color: 'oklch(0.5 0.02 160)', fontSize: 11 }}>
-                                        🔄 {formatLastSynced(lastSynced)}
-                                    </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px' }}>
+                                    <div style={{ width: 30, height: 30, borderRadius: 9, background: 'oklch(0.3 0.01 160)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid oklch(0.55 0.02 160)', borderTopColor: 'transparent' }} />
+                                    </div>
+                                    <span style={{ fontSize: 13, color: 'oklch(0.55 0.02 160)' }}>Synced {formatLastSynced(lastSynced)}</span>
                                 </div>
 
+                                <div style={{ height: 1, background: 'oklch(1 0 0 / 0.07)' }} />
+
                                 {/* Logout */}
-                                <div style={{ borderTop: '1px solid oklch(1 0 0 / 0.08)' }}>
-                                    <button
-                                        onClick={() => { handleLogout(); setShowProfileMenu(false); }}
-                                        style={{ ...menuItemStyle, color: RED }}
-                                    >
-                                        🚪 Log out
-                                    </button>
-                                </div>
+                                <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} style={dropdownRowStyle}>
+                                    <div style={{ width: 30, height: 30, borderRadius: 9, background: 'oklch(0.68 0.18 25 / 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <div style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: `8px solid ${RED}` }} />
+                                    </div>
+                                    <span style={{ fontSize: 14, fontWeight: 600, color: RED }}>Log out</span>
+                                </button>
                             </div>
                         )}
                     </div>
@@ -435,9 +455,6 @@ function Menu() {
                             {statusLabel}
                         </div>
                         <div style={{ fontSize: 13, color: 'oklch(0.75 0.02 160)', lineHeight: 1.5 }}>{statusSubtext}</div>
-                        <div style={{ fontSize: 12, color: 'oklch(0.6 0.02 160)', marginTop: 2 }}>
-                            🔄 Synced {formatLastSynced(lastSynced)}
-                        </div>
                     </div>
                 </div>
 

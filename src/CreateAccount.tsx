@@ -60,15 +60,9 @@ function CreateAccount() {
     return (
         <div className="create-background">
             <div className="login">
-                <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                    <p style={{ fontSize: 36, margin: 0 }}>🥗</p>
-                    <h1 style={{ color: 'white', fontSize: 20, fontWeight: 700, margin: '8px 0 4px' }}>
-                        Create Account
-                    </h1>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, margin: 0 }}>
-                        Start your information diet today
-                    </p>
-                </div>
+                <div className="authLogo"><div className="authLogo-dot" /></div>
+                <h1 className="authTitle">Create Account</h1>
+                <p className="authSubtitle">Start your information diet today</p>
 
                 <input
                     type="email"
@@ -93,10 +87,10 @@ function CreateAccount() {
                 />
 
                 {password && (
-                    <div style={{ width: 220 }}>
+                    <div style={{ width: '100%', marginTop: -4 }}>
                         {requirements.map((req, index) => (
                             <p key={index} style={{
-                                color: req.met ? '#00c896' : '#ff6b6b',
+                                color: req.met ? 'oklch(0.75 0.15 155)' : 'oklch(0.68 0.18 25)',
                                 fontSize: 11,
                                 margin: '2px 0'
                             }}>
@@ -112,6 +106,7 @@ function CreateAccount() {
                     onKeyDown={(e) => handleKeyDown(e, handleCreate)}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm Password"
+                    style={{ marginBottom: 14 }}
                 />
 
                 {error && <p className="error-message">{error}</p>}
@@ -120,9 +115,8 @@ function CreateAccount() {
                     {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
                 <button
-                    className="authbutton"
+                    className="authbutton authbutton-secondary"
                     onClick={() => navigate('/login')}
-                    style={{ background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)' }}
                 >
                     Back to Login
                 </button>

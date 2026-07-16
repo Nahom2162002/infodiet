@@ -7,105 +7,149 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: Inter, sans-serif;
-            background: radial-gradient(circle at 50% 0%, #0a2e1a, #0a0f0d);
+            font-family: system-ui, sans-serif;
+            background: radial-gradient(120% 100% at 50% 0%, oklch(0.19 0.03 160) 0%, oklch(0.14 0.015 160) 55%, oklch(0.12 0.01 160) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            padding: 60px 24px;
+            color: oklch(0.95 0.01 160);
         }
         .container {
-            text-align: center;
-            padding: 40px 24px;
-            max-width: 480px;
             width: 100%;
+            max-width: 560px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 22px;
+            text-align: center;
         }
-        .emoji { font-size: 64px; margin-bottom: 24px; }
+        .icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: conic-gradient(oklch(0.68 0.18 25) 0deg 250deg, oklch(0.3 0.02 160) 250deg 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px oklch(0.68 0.18 25 / 0.3);
+        }
+        .icon-dot {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: oklch(0.14 0.015 160);
+        }
+        .heading {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
         h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #00c896;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: oklch(0.68 0.18 25);
         }
-        .category {
-            font-size: 18px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 8px;
+        .category-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .category-chip {
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .category-label {
+            font-size: 17px;
+            font-weight: 600;
+            color: oklch(0.85 0.01 160);
         }
         .url {
             font-size: 13px;
-            color: rgba(255,255,255,0.3);
-            margin-bottom: 24px;
+            color: oklch(0.55 0.02 160);
             word-break: break-all;
         }
         .budget-info {
-            background: rgba(0,200,150,0.08);
-            border: 1px solid rgba(0,200,150,0.2);
-            border-radius: 12px;
-            padding: 16px 24px;
-            margin-bottom: 24px;
-            font-size: 14px;
-            color: rgba(255,255,255,0.6);
-            line-height: 1.6;
-        }
-        .budget-info strong { color: #00c896; }
-        .message {
+            width: 100%;
+            background: oklch(0.2 0.02 160);
+            border: 1px solid oklch(0.68 0.18 25 / 0.25);
+            border-radius: 16px;
+            padding: 22px 24px;
             font-size: 15px;
-            color: rgba(255,255,255,0.6);
             line-height: 1.7;
-            margin-bottom: 32px;
+            color: oklch(0.8 0.01 160);
+        }
+        .budget-info strong { font-weight: 700; color: oklch(0.75 0.15 155); }
+        .message {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 15px;
+            color: oklch(0.7 0.01 160);
         }
         .buttons {
             display: flex;
             gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
+            margin-top: 8px;
         }
-        .btn-primary {
-            padding: 12px 24px;
-            background: rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.6);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 10px;
-            font-size: 14px;
+        button {
+            padding: 14px 26px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-back {
+            background: transparent;
+            color: oklch(0.9 0.01 160);
+            border: 1px solid oklch(1 0 0 / 0.14);
         }
         .btn-override {
-            padding: 12px 24px;
-            background: rgba(255,107,107,0.15);
-            color: #ff6b6b;
-            border: 1px solid rgba(255,107,107,0.3);
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
+            background: oklch(0.68 0.18 25 / 0.12);
+            color: oklch(0.68 0.18 25);
+            border: 1px solid oklch(0.68 0.18 25 / 0.5);
         }
         .override-note {
-            color: rgba(255,255,255,0.2);
-            font-size: 11px;
-            margin-top: 16px;
+            font-size: 12px;
+            color: oklch(0.5 0.02 160);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="emoji">🥗</div>
-        <h1>Budget Reached</h1>
-        <p class="category" id="categoryText">Loading...</p>
-        <p class="url" id="urlText"></p>
+        <div class="icon"><div class="icon-dot"></div></div>
+
+        <div class="heading">
+            <h1>Budget Reached</h1>
+            <div class="category-row">
+                <div class="category-chip" id="categoryChip"></div>
+                <div class="category-label" id="categoryText">Loading...</div>
+            </div>
+            <div class="url" id="urlText"></div>
+        </div>
 
         <div class="budget-info" id="budgetInfo"></div>
 
-        <p class="message">
-            Your information diet is looking out for you.<br>
-            You've reached your daily limit for this content category.
-        </p>
+        <div class="message">
+            <div>Your information diet is looking out for you.</div>
+            <div>You've reached your daily limit for this content category.</div>
+        </div>
 
         <div class="buttons">
-            <button class="btn-primary" id="backBtn">← Go Back</button>
+            <button class="btn-back" id="backBtn">&larr; Go Back</button>
             <button class="btn-override" id="overrideBtn">Override for 10 min</button>
         </div>
-        <p class="override-note">Overriding will allow access for 10 minutes before blocking again</p>
+        <div class="override-note">Overriding will allow access for 10 minutes before blocking again</div>
     </div>
 
     <script src="budget-exceeded.js"></script>

@@ -20,28 +20,35 @@ function PopupSizeManager() {
 
 function Home() {
     return (
-        <div className="splashBackground">
+        <div className="splashBackground" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                gap: 16,
+                gap: 18,
                 padding: 24,
-                background: 'rgba(0,0,0,0.4)'
+                textAlign: 'center'
             }}>
-                <h1 style={{
-                    color: 'white',
-                    fontSize: 22,
-                    fontWeight: 700,
-                    textAlign: 'center',
-                    margin: 0,
-                    textShadow: '0 0 20px rgba(0,200,150,0.8)'
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    filter: 'drop-shadow(0 0 18px oklch(0.75 0.15 155 / 0.45))'
                 }}>
-                    🥗 InfoDiet
-                </h1>
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textAlign: 'center' }}>
+                    <div style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        background: 'conic-gradient(oklch(0.75 0.15 155) 0deg 250deg, oklch(0.3 0.02 160) 250deg 360deg)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'oklch(0.14 0.015 160)' }} />
+                    </div>
+                    <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', color: 'oklch(0.95 0.01 160)' }}>InfoDiet</div>
+                </div>
+                <p style={{ color: 'oklch(0.65 0.02 160)', fontSize: 16, margin: 0 }}>
                     Your brain deserves a healthy diet
                 </p>
                 <a
@@ -49,8 +56,9 @@ function Home() {
                     target="_blank"
                     rel="noreferrer"
                     style={{
-                        color: '#00c896',
-                        fontSize: 13,
+                        color: 'oklch(0.75 0.15 155)',
+                        fontSize: 15,
+                        fontWeight: 600,
                         textDecoration: 'underline'
                     }}
                 >
