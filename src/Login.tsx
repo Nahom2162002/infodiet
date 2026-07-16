@@ -29,6 +29,22 @@ function Login() {
                     plan: planData.plan
                 });
 
+                // Logging out clears the locally-accumulated todayConsumption for
+                // privacy on shared machines, so re-seed it from the same backend
+                // totals the web dashboard's Budget Status reads, rather than
+                // letting the menu sit at 0 until local tracking catches back up.
+                try {
+                    const statsRes = await fetch('https://infodiet-web.vercel.app/api/consumption/stats', {
+                        headers: { 'authorization': `Bearer ${data.token}` }
+                    });
+                    const statsData = await statsRes.json();
+                    if (statsData.todayConsumption) {
+                        await chrome.storage.local.set({ todayConsumption: statsData.todayConsumption });
+                    }
+                } catch (err) {
+                    console.error('Failed to restore consumption stats after login:', err);
+                }
+
                 navigate('/menu');
             } else {
                 setError(data.error);
