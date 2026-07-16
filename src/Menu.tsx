@@ -25,6 +25,32 @@ const PRO_FEATURES = [
     'Cross-device sync',
 ];
 
+const GREEN = 'oklch(0.75 0.15 155)';
+const AMBER = 'oklch(0.78 0.15 85)';
+const RED = 'oklch(0.68 0.18 25)';
+const NEUTRAL = 'oklch(0.5 0.02 160)';
+
+const CATEGORY_HUE: Record<string, number> = {
+    news: 250,
+    social: 320,
+    entertainment: 300,
+    educational: 140,
+    shopping: 70,
+    forums: 200,
+    gaming: 280,
+    other: 230,
+};
+const CATEGORY_LETTER: Record<string, string> = {
+    news: 'N',
+    social: 'S',
+    entertainment: 'E',
+    educational: 'Ed',
+    shopping: 'Sh',
+    forums: 'F',
+    gaming: 'G',
+    other: 'O',
+};
+
 function Menu() {
     const navigate = useNavigate();
     const [plan, setPlan] = useState<string>('free');
@@ -171,257 +197,297 @@ function Menu() {
 
     const getInitials = (name: string) => name ? name.slice(0, 2).toUpperCase() : '?';
 
-    const getCategoryStatus = (category: string) => {
-        const spent = todayConsumption[category] || 0;
-        const limit = budgets[category] ?? CATEGORIES[category]?.defaultBudget ?? -1;
-        if (limit === -1) return 'unlimited';
-        const pct = (spent / limit) * 100;
-        if (pct >= 100) return 'over';
-        if (pct >= 80) return 'warning';
-        return 'ok';
-    };
-
-    const getStatusColor = (status: string) => {
-        if (status === 'over') return '#ff6b6b';
-        if (status === 'warning') return '#ffd93d';
-        if (status === 'unlimited') return 'rgba(255,255,255,0.2)';
-        return '#00c896';
-    };
-
     const menuItemStyle: React.CSSProperties = {
         display: 'block',
         width: '100%',
         padding: '10px 16px',
         background: 'transparent',
         border: 'none',
-        color: 'rgba(255,255,255,0.8)',
+        color: 'oklch(0.8 0.01 160)',
         fontSize: 13,
         textAlign: 'left',
         cursor: 'pointer'
     };
 
-    return (
-        <div className="menuBackground" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ width: '100%', maxWidth: 640 }}>
-            {/* Header */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '20px 16px',
-                borderBottom: '1px solid rgba(0,200,150,0.1)'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 20 }}>🥗</span>
-                    <span style={{ color: 'white', fontSize: 16, fontWeight: 700 }}>InfoDiet</span>
-                </div>
+    // Per-category cards + running totals for the summary ring
+    let usedSum = 0;
+    let limitSum = 0;
+    const categoryCards = Object.entries(CATEGORIES).map(([key, cat]) => {
+        const spent = todayConsumption[key] || 0;
+        const limit = budgets[key] ?? cat.defaultBudget;
+        const hasLimit = limit !== -1;
+        const pct = hasLimit ? Math.min(100, (spent / limit) * 100) : 0;
+        const status = !hasLimit ? 'neutral' : pct >= 100 ? 'over' : pct >= 75 ? 'near' : 'good';
+        if (hasLimit) {
+            usedSum += spent;
+            limitSum += limit;
+        }
+        return { key, cat, spent, limit, hasLimit, pct, status };
+    });
 
-                {/* Profile Icon */}
-                <div ref={profileRef} style={{ position: 'relative' }}>
-                    <button
-                        onClick={() => setShowProfileMenu(prev => !prev)}
-                        style={{
+    const overallPct = limitSum > 0 ? Math.min(100, (usedSum / limitSum) * 100) : 0;
+    const overallStatus = limitSum === 0 ? 'none' : overallPct >= 100 ? 'over' : overallPct >= 75 ? 'near' : 'good';
+    const overallColor = overallStatus === 'over' ? RED : overallStatus === 'near' ? AMBER : overallStatus === 'none' ? NEUTRAL : GREEN;
+    const statusLabel = overallStatus === 'over' ? 'Over budget' : overallStatus === 'near' ? 'Near your limit' : overallStatus === 'none' ? 'No budgets set' : 'On track';
+    const statusSubtext = overallStatus === 'over'
+        ? 'You’ve gone over your tracked-category budget. Consider cutting back today.'
+        : overallStatus === 'near'
+        ? 'You’re close to your limit across tracked categories. Pace yourself.'
+        : overallStatus === 'none'
+        ? (plan === 'pro' ? 'Set daily budgets per category to start tracking progress.' : 'Upgrade to Pro to set daily budgets per category.')
+        : 'You’re comfortably within your tracked-category budget.';
+    const ringGradient = limitSum === 0
+        ? `conic-gradient(${NEUTRAL} 0deg 360deg)`
+        : `conic-gradient(${overallColor} ${overallPct * 3.6}deg, oklch(1 0 0 / 0.08) ${overallPct * 3.6}deg)`;
+
+    return (
+        <div className="menuBackground" style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '32px 24px 56px',
+            color: 'oklch(0.95 0.01 160)',
+            fontFamily: "'Inter', system-ui, sans-serif"
+        }}>
+            <div style={{ width: '100%', maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{
                             width: 36,
                             height: 36,
-                            borderRadius: '50%',
-                            background: plan === 'pro'
-                                ? 'linear-gradient(135deg, #00c896, #00a57a)'
-                                : 'rgba(255,255,255,0.15)',
-                            border: plan === 'pro'
-                                ? '2px solid #00c896'
-                                : '2px solid rgba(255,255,255,0.2)',
-                            color: 'white',
-                            fontSize: 13,
-                            fontWeight: 700,
-                            cursor: 'pointer',
+                            borderRadius: 11,
+                            background: `conic-gradient(${GREEN} 0deg 250deg, oklch(0.3 0.02 160) 250deg 360deg)`,
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {getInitials(username)}
-                    </button>
-
-                    {/* Dropdown */}
-                    {showProfileMenu && (
-                        <div style={{
-                            position: 'absolute',
-                            top: 44,
-                            right: 0,
-                            background: '#111a16',
-                            border: '1px solid rgba(0,200,150,0.15)',
-                            borderRadius: 12,
-                            padding: '8px 0',
-                            minWidth: 220,
-                            zIndex: 100,
-                            boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+                            justifyContent: 'center',
+                            boxShadow: `0 2px 10px oklch(0.75 0.15 155 / 0.25)`
                         }}>
-                            {/* User info */}
-                            <div style={{
-                                padding: '10px 16px 12px',
-                                borderBottom: '1px solid rgba(255,255,255,0.08)'
-                            }}>
-                                <p style={{ color: 'white', fontWeight: 600, fontSize: 14, margin: '0 0 4px' }}>
-                                    {username}
-                                </p>
-                                <span style={{
-                                    padding: '2px 8px',
-                                    borderRadius: 20,
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    background: plan === 'pro'
-                                        ? 'linear-gradient(135deg, #00c896, #00a57a)'
-                                        : 'rgba(255,255,255,0.1)',
-                                    color: 'white',
-                                    whiteSpace: 'nowrap',
-                                    display: 'inline-block'
-                                }}>
-                                    {plan === 'pro'
-                                        ? '🥗 PRO'
-                                        : 'FREE'}
-                                </span>
-                            </div>
+                            <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'oklch(0.14 0.015 160)' }} />
+                        </div>
+                        <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em' }}>InfoDiet</span>
+                    </div>
 
-                            {plan === 'pro' && (
-                                <button onClick={() => { handleDashboard(); setShowProfileMenu(false); }} style={menuItemStyle}>
-                                    📊 Full Dashboard
-                                </button>
-                            )}
-
-                            {plan === 'pro' && (
-                                <button onClick={() => { handleBudgetSettings(); setShowProfileMenu(false); }} style={menuItemStyle}>
-                                    ⚙️ Manage Budgets
-                                </button>
-                            )}
-
-                            {/* Free tier */}
-                            {plan === 'free' && (
-                                <button
-                                    onClick={() => { setShowUpgradePage(true); setShowProfileMenu(false); }}
-                                    style={{ ...menuItemStyle, color: '#00c896' }}
-                                >
-                                    ⭐ Upgrade to Pro
-                                </button>
-                            )}
-
-                            {/* Sync */}
-                            <div style={{
+                    {/* Profile Icon */}
+                    <div ref={profileRef} style={{ position: 'relative' }}>
+                        <button
+                            onClick={() => setShowProfileMenu(prev => !prev)}
+                            style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: '50%',
+                                background: plan === 'pro' ? GREEN : 'oklch(1 0 0 / 0.08)',
+                                border: plan === 'pro' ? `2px solid ${GREEN}` : '2px solid oklch(1 0 0 / 0.12)',
+                                color: plan === 'pro' ? 'oklch(0.14 0.02 160)' : 'oklch(0.9 0.01 160)',
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '10px 16px',
-                                borderTop: '1px solid rgba(255,255,255,0.08)'
+                                justifyContent: 'center'
+                            }}
+                        >
+                            {getInitials(username)}
+                        </button>
+
+                        {/* Dropdown */}
+                        {showProfileMenu && (
+                            <div style={{
+                                position: 'absolute',
+                                top: 44,
+                                right: 0,
+                                background: 'oklch(0.2 0.02 160)',
+                                border: '1px solid oklch(1 0 0 / 0.08)',
+                                borderRadius: 12,
+                                padding: '8px 0',
+                                minWidth: 220,
+                                zIndex: 100,
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
                             }}>
-                                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>
-                                    🔄 {formatLastSynced(lastSynced)}
-                                </span>
-                            </div>
-
-                            {/* Logout */}
-                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                                <button
-                                    onClick={() => { handleLogout(); setShowProfileMenu(false); }}
-                                    style={{ ...menuItemStyle, color: '#ff6b6b' }}
-                                >
-                                    🚪 Log out
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Main content — Today's consumption */}
-            <div style={{ padding: '12px 16px' }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 12
-                }}>
-                    <h3 style={{ color: 'white', fontSize: 13, fontWeight: 600, margin: 0 }}>
-                        Today's Information Diet
-                    </h3>
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>
-                        {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                    </span>
-                </div>
-
-                {/* Category list */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {Object.entries(CATEGORIES).map(([key, cat]) => {
-                        const spent = todayConsumption[key] || 0;
-                        const limit = budgets[key] ?? cat.defaultBudget;
-                        const status = getCategoryStatus(key);
-                        const statusColor = getStatusColor(status);
-                        const pct = limit === -1 ? 0 : Math.min((spent / limit) * 100, 100);
-
-                        return (
-                            <div key={key} style={{
-                                background: 'rgba(255,255,255,0.03)',
-                                border: `1px solid ${status === 'over' ? 'rgba(255,107,107,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                                borderRadius: 10,
-                                padding: '10px 12px'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <span style={{ fontSize: 14 }}>{cat.emoji}</span>
-                                        <span style={{ color: 'white', fontSize: 12, fontWeight: 500 }}>{cat.label}</span>
-                                        {status === 'over' && (
-                                            <span style={{
-                                                fontSize: 9,
-                                                fontWeight: 700,
-                                                color: '#ff6b6b',
-                                                background: 'rgba(255,107,107,0.15)',
-                                                padding: '1px 6px',
-                                                borderRadius: 10
-                                            }}>OVER</span>
-                                        )}
-                                    </div>
-                                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
-                                        {spent > 0 ? formatMinutes(spent) : '0m'}
-                                        {limit !== -1 && ` / ${limit}m`}
-                                        {limit === -1 && ' / ∞'}
+                                {/* User info */}
+                                <div style={{
+                                    padding: '10px 16px 12px',
+                                    borderBottom: '1px solid oklch(1 0 0 / 0.08)'
+                                }}>
+                                    <p style={{ color: 'oklch(0.95 0.01 160)', fontWeight: 600, fontSize: 14, margin: '0 0 4px' }}>
+                                        {username}
+                                    </p>
+                                    <span style={{
+                                        padding: '2px 8px',
+                                        borderRadius: 20,
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        background: plan === 'pro' ? GREEN : 'oklch(1 0 0 / 0.08)',
+                                        color: plan === 'pro' ? 'oklch(0.14 0.02 160)' : 'oklch(0.7 0.01 160)',
+                                        whiteSpace: 'nowrap',
+                                        display: 'inline-block'
+                                    }}>
+                                        {plan === 'pro' ? '🥗 PRO' : 'FREE'}
                                     </span>
                                 </div>
 
-                                {/* Progress bar */}
+                                {plan === 'pro' && (
+                                    <button onClick={() => { handleDashboard(); setShowProfileMenu(false); }} style={menuItemStyle}>
+                                        📊 Full Dashboard
+                                    </button>
+                                )}
+
+                                {plan === 'pro' && (
+                                    <button onClick={() => { handleBudgetSettings(); setShowProfileMenu(false); }} style={menuItemStyle}>
+                                        ⚙️ Manage Budgets
+                                    </button>
+                                )}
+
+                                {/* Free tier */}
+                                {plan === 'free' && (
+                                    <button
+                                        onClick={() => { setShowUpgradePage(true); setShowProfileMenu(false); }}
+                                        style={{ ...menuItemStyle, color: GREEN }}
+                                    >
+                                        ⭐ Upgrade to Pro
+                                    </button>
+                                )}
+
+                                {/* Sync */}
                                 <div style={{
-                                    height: 4,
-                                    background: 'rgba(255,255,255,0.08)',
-                                    borderRadius: 2,
-                                    overflow: 'hidden'
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '10px 16px',
+                                    borderTop: '1px solid oklch(1 0 0 / 0.08)'
                                 }}>
+                                    <span style={{ color: 'oklch(0.5 0.02 160)', fontSize: 11 }}>
+                                        🔄 {formatLastSynced(lastSynced)}
+                                    </span>
+                                </div>
+
+                                {/* Logout */}
+                                <div style={{ borderTop: '1px solid oklch(1 0 0 / 0.08)' }}>
+                                    <button
+                                        onClick={() => { handleLogout(); setShowProfileMenu(false); }}
+                                        style={{ ...menuItemStyle, color: RED }}
+                                    >
+                                        🚪 Log out
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Title */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                    <span style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em' }}>Your Information Diet</span>
+                </div>
+
+                {/* Summary ring */}
+                <div style={{
+                    background: 'oklch(0.2 0.02 160)',
+                    border: '1px solid oklch(1 0 0 / 0.07)',
+                    borderRadius: 20,
+                    padding: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 24,
+                    flexWrap: 'wrap'
+                }}>
+                    <div style={{
+                        width: 116,
+                        height: 116,
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: ringGradient
+                    }}>
+                        <div style={{
+                            width: 92,
+                            height: 92,
+                            borderRadius: '50%',
+                            background: 'oklch(0.2 0.02 160)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 2
+                        }}>
+                            <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em' }}>{formatMinutes(usedSum)}</div>
+                            <div style={{ fontSize: 11, color: 'oklch(0.65 0.02 160)' }}>
+                                of {limitSum > 0 ? formatMinutes(limitSum) : '∞'}
+                            </div>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180, flex: 1 }}>
+                        <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '5px 11px',
+                            borderRadius: 999,
+                            background: 'oklch(0.3 0.02 160 / 0.6)',
+                            color: overallColor,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            width: 'fit-content'
+                        }}>
+                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: overallColor }} />
+                            {statusLabel}
+                        </div>
+                        <div style={{ fontSize: 13, color: 'oklch(0.75 0.02 160)', lineHeight: 1.5 }}>{statusSubtext}</div>
+                        <div style={{ fontSize: 12, color: 'oklch(0.6 0.02 160)', marginTop: 2 }}>
+                            🔄 Synced {formatLastSynced(lastSynced)}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Category list */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {categoryCards.map(({ key, cat, spent, limit, hasLimit, pct, status }) => {
+                        const hue = CATEGORY_HUE[key] ?? 200;
+                        const letter = CATEGORY_LETTER[key] ?? cat.label[0];
+                        const barColor = status === 'over' ? RED : status === 'near' ? AMBER : status === 'neutral' ? NEUTRAL : GREEN;
+
+                        return (
+                            <div key={key} style={{
+                                background: 'oklch(0.2 0.02 160)',
+                                border: '1px solid oklch(1 0 0 / 0.06)',
+                                borderRadius: 14,
+                                padding: '14px 16px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{
+                                            width: 30,
+                                            height: 30,
+                                            borderRadius: 9,
+                                            background: `oklch(0.32 0.06 ${hue})`,
+                                            color: `oklch(0.85 0.08 ${hue})`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: 13,
+                                            fontWeight: 700
+                                        }}>{letter}</div>
+                                        <span style={{ fontSize: 14, fontWeight: 600 }}>{cat.label}</span>
+                                    </div>
+                                    <span style={{ fontSize: 12, color: 'oklch(0.65 0.02 160)', fontVariantNumeric: 'tabular-nums' }}>
+                                        {hasLimit ? `${formatMinutes(spent)} / ${formatMinutes(limit)}` : `${formatMinutes(spent)} · no limit`}
+                                    </span>
+                                </div>
+                                <div style={{ width: '100%', height: 6, borderRadius: 999, background: 'oklch(1 0 0 / 0.07)', overflow: 'hidden' }}>
                                     <div style={{
                                         height: '100%',
-                                        width: limit === -1 ? '0%' : `${pct}%`,
-                                        background: statusColor,
-                                        borderRadius: 2,
-                                        transition: 'width 0.3s ease'
+                                        borderRadius: 999,
+                                        background: barColor,
+                                        width: hasLimit ? `${pct}%` : '0%',
+                                        transition: 'width 0.4s ease'
                                     }} />
                                 </div>
                             </div>
                         );
                     })}
                 </div>
-
-                {/* Total time */}
-                <div style={{
-                    marginTop: 12,
-                    padding: '10px 12px',
-                    background: 'rgba(0,200,150,0.05)',
-                    border: '1px solid rgba(0,200,150,0.15)',
-                    borderRadius: 10,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>Total screen time today</span>
-                    <span style={{ color: '#00c896', fontSize: 14, fontWeight: 700 }}>
-                        {formatMinutes(Object.values(todayConsumption).reduce((a, b) => a + b, 0))}
-                    </span>
-                </div>
-            </div>
             </div>
 
             {/* Upgrade page modal */}
