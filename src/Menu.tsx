@@ -78,14 +78,14 @@ function Menu() {
             if (!token) return;
 
             // Fetch username
-            const userRes = await fetch('https://infodiet-web.vercel.app/api/user/me', {
+            const userRes = await fetch('https://www.getinfodiet.app/api/user/me', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const userData = await userRes.json();
             if (userData.username) setUsername(userData.username);
 
             // Fetch plan status
-            const statusRes = await fetch('https://infodiet-web.vercel.app/api/user/plan', {
+            const statusRes = await fetch('https://www.getinfodiet.app/api/user/plan', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const statusData = await statusRes.json();
@@ -95,7 +95,7 @@ function Menu() {
             }
 
             // Fetch budgets
-            const budgetRes = await fetch('https://infodiet-web.vercel.app/api/budget', {
+            const budgetRes = await fetch('https://www.getinfodiet.app/api/budget', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const budgetData = await budgetRes.json();
@@ -142,7 +142,7 @@ function Menu() {
 
     const handleUpgrade = async () => {
         const { token } = await chrome.storage.local.get('token');
-        const response = await fetch('https://infodiet-web.vercel.app/api/stripe/checkout', {
+        const response = await fetch('https://www.getinfodiet.app/api/stripe/checkout', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ function Menu() {
         const result = await chrome.storage.local.get('token');
         const token = result.token as string;
         chrome.tabs.create({
-            url: `https://infodiet-web.vercel.app/dashboard?token=${token}`
+            url: `https://www.getinfodiet.app/dashboard?token=${token}`
         });
     };
 
@@ -175,7 +175,7 @@ function Menu() {
         const result = await chrome.storage.local.get('token');
         const token = result.token as string;
         chrome.tabs.create({
-            url: `https://infodiet-web.vercel.app/budget?token=${token}`
+            url: `https://www.getinfodiet.app/budget?token=${token}`
         });
     };
 
@@ -525,118 +525,40 @@ function Menu() {
 function UpgradePage({ onUpgrade, onClose }: { onUpgrade: () => void; onClose: () => void }) {
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.85)',
-            zIndex: 1000,
-            overflowY: 'auto',
-            padding: 16
-        }}>
-            <div style={{
-                background: 'linear-gradient(135deg, #0a2e1a, #0a0f0d)',
-                border: '1px solid rgba(0,200,150,0.3)',
-                borderRadius: 16,
-                padding: '20px 18px',
-                maxWidth: 360,
-                margin: '0 auto'
-            }}>
-                <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                    <p style={{ fontSize: 26, margin: 0 }}>🥗</p>
-                    <h2 style={{ color: 'white', fontSize: 16, fontWeight: 700, margin: '6px 0 4px' }}>
-                        Upgrade to Pro
-                    </h2>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 0 }}>
-                        $9.99 — launch price, lifetime access (price goes up soon)
-                    </p>
+        <div className="upgradeOverlay">
+            <div className="upgradeCard">
+                <div className="authLogo" style={{ marginBottom: 8 }}>
+                    <div className="authLogo-dot" />
+                </div>
+                <h2 className="authTitle">Upgrade to Pro</h2>
+                <p className="authSubtitle">
+                    $9.99 — launch price, lifetime access (price goes up soon)
+                </p>
+
+                <span className="upgradeBadge">FREE</span>
+                <div className="upgradeFeatureList">
+                    {FREE_FEATURES.map((f, i) => (
+                        <div key={i} className="upgradeFeature">
+                            <div className="upgradeFeature-check">✓</div>
+                            <div className="upgradeFeature-text">{f}</div>
+                        </div>
+                    ))}
                 </div>
 
-                <div style={{ marginBottom: 14 }}>
-                    <span style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: 20,
-                        background: 'rgba(255,255,255,0.1)',
-                        color: 'rgba(255,255,255,0.5)',
-                        border: '1px solid rgba(255,255,255,0.1)'
-                    }}>
-                        FREE
-                    </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-                        {FREE_FEATURES.map((f, i) => (
-                            <p key={i} style={{
-                                color: 'rgba(255,255,255,0.7)',
-                                fontSize: 12,
-                                margin: 0,
-                                display: 'flex',
-                                gap: 8,
-                                alignItems: 'center'
-                            }}>
-                                <span style={{ color: '#00c896' }}>✓</span> {f}
-                            </p>
-                        ))}
-                    </div>
+                <span className="upgradeBadge upgradeBadge-pro">PRO</span>
+                <div className="upgradeFeatureList upgradeFeatureList-pro">
+                    {PRO_FEATURES.map((f, i) => (
+                        <div key={i} className="upgradeFeature">
+                            <div className="upgradeFeature-check">✓</div>
+                            <div className="upgradeFeature-text-pro">{f}</div>
+                        </div>
+                    ))}
                 </div>
 
-                <div style={{ marginBottom: 16 }}>
-                    <span style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: 20,
-                        background: 'rgba(0,200,150,0.15)',
-                        color: '#00c896',
-                        border: '1px solid rgba(0,200,150,0.3)'
-                    }}>
-                        PRO
-                    </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-                        {PRO_FEATURES.map((f, i) => (
-                            <p key={i} style={{
-                                color: 'rgba(255,255,255,0.7)',
-                                fontSize: 12,
-                                margin: 0,
-                                display: 'flex',
-                                gap: 8,
-                                alignItems: 'center'
-                            }}>
-                                <span style={{ color: '#00c896' }}>✓</span> {f}
-                            </p>
-                        ))}
-                    </div>
-                </div>
-
-                <button
-                    onClick={onUpgrade}
-                    style={{
-                        width: '100%',
-                        padding: 10,
-                        borderRadius: 10,
-                        border: 'none',
-                        background: 'linear-gradient(135deg, #00c896, #00a57a)',
-                        color: 'white',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        marginBottom: 8
-                    }}
-                >
+                <button className="authbutton" onClick={onUpgrade}>
                     Upgrade to Pro
                 </button>
-                <button
-                    onClick={onClose}
-                    style={{
-                        width: '100%',
-                        padding: 9,
-                        borderRadius: 10,
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        background: 'transparent',
-                        color: 'rgba(255,255,255,0.5)',
-                        fontSize: 12,
-                        cursor: 'pointer'
-                    }}
-                >
+                <button className="authbutton authbutton-secondary" onClick={onClose}>
                     Maybe later
                 </button>
             </div>

@@ -169,3 +169,89 @@ input::placeholder {
     text-align: center;
     margin: 0 0 10px;
 }
+
+.upgradeOverlay {
+    position: fixed;
+    inset: 0;
+    background: oklch(0.1 0.01 160 / 0.85);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.upgradeCard {
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+    background: oklch(0.2 0.02 160);
+    border: 1px solid oklch(1 0 0 / 0.07);
+    border-radius: 20px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.upgradeBadge {
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: oklch(1 0 0 / 0.06);
+    color: oklch(0.65 0.02 160);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+}
+
+.upgradeBadge-pro {
+    background: oklch(0.75 0.15 155 / 0.18);
+    border: 1px solid oklch(0.75 0.15 155 / 0.4);
+    color: oklch(0.75 0.15 155);
+}
+
+.upgradeFeatureList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.upgradeFeatureList-pro {
+    margin-bottom: 22px;
+}
+
+.upgradeFeature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.upgradeFeature-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: oklch(0.75 0.15 155 / 0.15);
+    color: oklch(0.75 0.15 155);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.upgradeFeature-text {
+    font-size: 14px;
+    color: oklch(0.85 0.01 160);
+}
+
+.upgradeFeature-text-pro {
+    font-size: 14px;
+    font-weight: 600;
+    color: oklch(0.95 0.01 160);
+}

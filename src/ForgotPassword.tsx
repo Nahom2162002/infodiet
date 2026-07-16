@@ -22,7 +22,7 @@ function ForgotPassword() {
         setError('');
 
         try {
-            const response = await fetch('https://infodiet-web.vercel.app/api/auth/forgot-password', {
+            const response = await fetch('https://www.getinfodiet.app/api/auth/forgot-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })

@@ -12,14 +12,14 @@ function Login() {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch('https://infodiet-web.vercel.app/api/auth/login', {
+            const response = await fetch('https://www.getinfodiet.app/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
             const data = await response.json();
             if (data.token) {
-                const planRes = await fetch('https://infodiet-web.vercel.app/api/user/plan', {
+                const planRes = await fetch('https://www.getinfodiet.app/api/user/plan', {
                     headers: { 'authorization': `Bearer ${data.token}` }
                 });
                 const planData = await planRes.json();
@@ -34,7 +34,7 @@ function Login() {
                 // totals the web dashboard's Budget Status reads, rather than
                 // letting the menu sit at 0 until local tracking catches back up.
                 try {
-                    const statsRes = await fetch('https://infodiet-web.vercel.app/api/consumption/stats', {
+                    const statsRes = await fetch('https://www.getinfodiet.app/api/consumption/stats', {
                         headers: { 'authorization': `Bearer ${data.token}` }
                     });
                     const statsData = await statsRes.json();
