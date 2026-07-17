@@ -89,7 +89,7 @@ function Menu() {
             setHasHadTrial(userData.hasHadTrial ?? false);
 
             // Replace the plan fetch in syncAll with:
-            const statusRes = await fetch('https://www.getinfodiet.app/api/stripe/status', {
+            const statusRes = await fetch('https://www.getinfodiet.app/api/user/plan', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const statusData = await statusRes.json();
@@ -148,7 +148,7 @@ function Menu() {
                 const token = result.token as string | undefined;
                 if (!token) return;
 
-                const statusRes = await fetch('https://www.getinfodiet.app/api/stripe/status', {
+                const statusRes = await fetch('https://www.getinfodiet.app/api/user/plan', {
                     headers: { 'authorization': `Bearer ${token}` }
                 });
                 const statusData = await statusRes.json();
@@ -177,7 +177,8 @@ function Menu() {
             headers: {
                 'Content-Type': 'application/json',
                 'authorization': `Bearer ${token}`
-            }
+            },
+            body: JSON.stringify({ hasHadTrial })
         });
         const data = await response.json();
 
@@ -616,10 +617,7 @@ function UpgradePage({ onUpgrade, onClose, hasHadTrial = false }: { onUpgrade: (
                 <div className="authLogo" style={{ marginBottom: 8 }}>
                     <div className="authLogo-dot" />
                 </div>
-                <h2 className="authTitle">{hasHadTrial ? 'Upgrade to Pro' : 'Start 7-day free trial'}</h2>
-                <p className="authSubtitle">
-                    $9.99 — launch price, lifetime access (price goes up soon)
-                </p>
+                <h2 className="authTitle">Upgrade to Pro</h2>
 
                 <span className="upgradeBadge">FREE</span>
                 <div className="upgradeFeatureList">
@@ -641,11 +639,13 @@ function UpgradePage({ onUpgrade, onClose, hasHadTrial = false }: { onUpgrade: (
                     ))}
                 </div>
                 <button className="authbutton" onClick={onUpgrade}>
-                    Start 7-day free trial
+                    {hasHadTrial ? 'Upgrade to Pro - $3/month' : 'Start 7-day free trial'}
                 </button>
-                <button className="authbutton" onClick={onUpgrade}>
-                    Upgrade to Pro
-                </button>
+                {!hasHadTrial && (
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, textAlign: 'center', margin: '-8px 0 4px' }}>
+                        No credit card required. Cancel anytime.
+                    </p>
+                )}
                 <button className="authbutton authbutton-secondary" onClick={onClose}>
                     Maybe later
                 </button>
