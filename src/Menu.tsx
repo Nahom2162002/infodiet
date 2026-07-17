@@ -158,6 +158,15 @@ function Menu() {
                     await chrome.storage.local.set({ plan: statusData.plan });
                     setPlan(statusData.plan);
                 }
+
+                const budgetRes = await fetch('https://www.getinfodiet.app/api/budget', {
+                    headers: { 'authorization': `Bearer ${token}` }
+                });
+                const budgetData = await budgetRes.json();
+                if (budgetData.budgets) {
+                    setBudgets(budgetData.budgets);
+                    await chrome.storage.local.set({ budgets: budgetData.budgets });
+                }
             }
         };
 
@@ -257,7 +266,7 @@ function Menu() {
     };
 
     const formatMinutes = (mins: number) => {
-        if (mins < 1) return '< 1m';
+        if (mins < 1) return '0m';
         if (mins < 60) return `${Math.round(mins)}m`;
         const h = Math.floor(mins / 60);
         const m = Math.round(mins % 60);
