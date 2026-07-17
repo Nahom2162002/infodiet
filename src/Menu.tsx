@@ -60,6 +60,9 @@ function Menu() {
     const [budgets, setBudgets] = useState<BudgetData>({});
     const [lastSynced, setLastSynced] = useState<string | null>(null);
     const [showUpgradePage, setShowUpgradePage] = useState(false);
+    const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
+    const [isTrialing, setIsTrialing] = useState(false);
+    const [hasHadTrial, setHasHadTrial] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -83,9 +86,10 @@ function Menu() {
             });
             const userData = await userRes.json();
             if (userData.username) setUsername(userData.username);
+            setHasHadTrial(userData.hasHadTrial ?? false);
 
-            // Fetch plan status
-            const statusRes = await fetch('https://www.getinfodiet.app/api/user/plan', {
+            // Replace the plan fetch in syncAll with:
+            const statusRes = await fetch('https://www.getinfodiet.app/api/stripe/status', {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             const statusData = await statusRes.json();
@@ -93,6 +97,8 @@ function Menu() {
                 await chrome.storage.local.set({ plan: statusData.plan });
                 setPlan(statusData.plan);
             }
+            setIsTrialing(statusData.isTrialing ?? false);
+            setCancelAtPeriodEnd(statusData.cancelAtPeriodEnd ?? false);
 
             // Fetch budgets
             const budgetRes = await fetch('https://www.getinfodiet.app/api/budget', {
@@ -135,6 +141,30 @@ function Menu() {
         return () => chrome.storage.onChanged.removeListener(handleStorageChange);
     }, []);
 
+    useEffect(() => {
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible') {
+                const result = await chrome.storage.local.get('token');
+                const token = result.token as string | undefined;
+                if (!token) return;
+
+                const statusRes = await fetch('https://www.getinfodiet.app/api/stripe/status', {
+                    headers: { 'authorization': `Bearer ${token}` }
+                });
+                const statusData = await statusRes.json();
+                setIsTrialing(statusData.isTrialing ?? false);
+                setCancelAtPeriodEnd(statusData.cancelAtPeriodEnd ?? false);
+                if (statusData.plan !== plan) {
+                    await chrome.storage.local.set({ plan: statusData.plan });
+                    setPlan(statusData.plan);
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [plan]);
+
     const handleLogout = async () => {
         await chrome.storage.local.remove(['token', 'plan', 'todayConsumption', 'budgets']);
         navigate('/login');
@@ -160,6 +190,52 @@ function Menu() {
 
         if (data.url) {
             chrome.tabs.create({ url: data.url });
+        }
+    };
+
+    const handleManageSubscription = async () => {
+        const { token } = await chrome.storage.local.get('token');
+        const response = await fetch('https://www.getinfodiet.app/api/stripe/portal', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'authorization': `Bearer ${token}`
+            }
+        });
+        const data = await response.json();
+
+        if (data.cancelled) {
+            await chrome.storage.local.set({ plan: 'free' });
+            setPlan('free');
+            setShowProfileMenu(false);
+            if (data.url) {
+                chrome.tabs.create({ url: data.url });
+            }
+            return;
+        }
+
+        if (data.url) {
+            chrome.tabs.create({ url: data.url });
+
+            const interval = setInterval(async () => {
+                const statusRes = await fetch('https://www.getinfodiet.app/api/stripe/status', {
+                    headers: { 'authorization': `Bearer ${token}` }
+                });
+                const statusData = await statusRes.json();
+
+                setCancelAtPeriodEnd(statusData.cancelAtPeriodEnd ?? false);
+
+                if (statusData.plan !== plan) {
+                    await chrome.storage.local.set({ plan: statusData.plan });
+                    setPlan(statusData.plan);
+                }
+
+                if (statusData.cancelAtPeriodEnd) {
+                    clearInterval(interval);
+                }
+            }, 3000);
+
+            setTimeout(() => clearInterval(interval), 600000);
         }
     };
 
@@ -331,7 +407,7 @@ function Menu() {
                                     {plan === 'pro' ? (
                                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 999, background: GREEN }}>
                                             <div style={{ width: 8, height: 8, background: 'oklch(0.14 0.02 160)', transform: 'rotate(45deg)' }} />
-                                            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', color: 'oklch(0.14 0.02 160)' }}>PRO</div>
+                                            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', color: 'oklch(0.14 0.02 160)' }}> {cancelAtPeriodEnd ? 'PRO — Cancels at period end' : isTrialing ? 'PRO TRIAL' : 'PRO'} </div>
                                         </div>
                                     ) : (
                                         <div style={{ padding: '6px 16px', borderRadius: 999, background: 'oklch(1 0 0 / 0.08)', fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', color: 'oklch(0.7 0.01 160)' }}>
@@ -360,6 +436,15 @@ function Menu() {
                                                 <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid oklch(0.8 0.08 85)' }} />
                                             </div>
                                             <span style={{ fontSize: 14, fontWeight: 600, color: 'oklch(0.9 0.01 160)' }}>Manage Budgets</span>
+                                        </button>
+
+                                        <button onClick={() => { handleManageSubscription(); setShowProfileMenu(false); }} style={dropdownRowStyle}>
+                                            <div style={{ width: 30, height: 30, borderRadius: 9, background: 'oklch(0.32 0.06 85)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                <div style={{ width: 16, height: 12, borderRadius: 3, border: '2px solid oklch(0.8 0.08 85)', position: 'relative', overflow: 'hidden' }}>
+                                                    <div style={{ position: 'absolute', top: 2, left: -2, right: -2, height: 3, background: 'oklch(0.8 0.08 85)' }} />
+                                                </div>
+                                            </div>
+                                            <span style={{ fontSize: 14, fontWeight: 600, color: 'oklch(0.9 0.01 160)' }}>{isTrialing ? 'Cancel Trial' : 'Manage Subscription'}</span>
                                         </button>
                                     </>
                                 ) : (
@@ -510,6 +595,7 @@ function Menu() {
             {/* Upgrade page modal */}
             {showUpgradePage && (
                 <UpgradePage
+                    hasHadTrial={hasHadTrial}
                     onUpgrade={() => {
                         setShowUpgradePage(false);
                         handleUpgrade();
@@ -522,7 +608,7 @@ function Menu() {
 }
 
 // Inline upgrade page
-function UpgradePage({ onUpgrade, onClose }: { onUpgrade: () => void; onClose: () => void }) {
+function UpgradePage({ onUpgrade, onClose, hasHadTrial = false }: { onUpgrade: () => void; onClose: () => void; hasHadTrial?: boolean }) {
 
     return (
         <div className="upgradeOverlay">
@@ -530,7 +616,7 @@ function UpgradePage({ onUpgrade, onClose }: { onUpgrade: () => void; onClose: (
                 <div className="authLogo" style={{ marginBottom: 8 }}>
                     <div className="authLogo-dot" />
                 </div>
-                <h2 className="authTitle">Upgrade to Pro</h2>
+                <h2 className="authTitle">{hasHadTrial ? 'Upgrade to Pro' : 'Start 7-day free trial'}</h2>
                 <p className="authSubtitle">
                     $9.99 — launch price, lifetime access (price goes up soon)
                 </p>
@@ -554,7 +640,9 @@ function UpgradePage({ onUpgrade, onClose }: { onUpgrade: () => void; onClose: (
                         </div>
                     ))}
                 </div>
-
+                <button className="authbutton" onClick={onUpgrade}>
+                    Start 7-day free trial
+                </button>
                 <button className="authbutton" onClick={onUpgrade}>
                     Upgrade to Pro
                 </button>
