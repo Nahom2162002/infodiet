@@ -22,8 +22,7 @@
     "alarms",
     "webNavigation",
     "notifications",
-    "windows",
-    "declarativeNetRequest"
+    "windows"
   ],
   "host_permissions": [
     "<all_urls>"
