@@ -286,7 +286,7 @@ async function saveCurrentTime() {
 
         todayConsumption[category] = (todayConsumption[category] || 0) + elapsed;
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateString(new Date());
         pendingSync.push({ domain, category, minutes: elapsed, date: today });
 
         await chrome.storage.local.set({ todayConsumption, pendingSync });
